@@ -3,6 +3,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Clash To Play</title>
+  <link rel="icon" type="image/png" href="icon.png"></link>
   <style>
       @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Roboto:wght@400;700&display=swap');
 
@@ -490,12 +491,34 @@
     </div>
 
     <!-- AUTH BUTTON -->
-    <div id="auth-ui" style="position: fixed; top: 15px; right: 15px; z-index: 1000;">
+     <div id="auth-ui" style="position: fixed; top: 15px; right: 15px; z-index: 1000; display: flex; gap: 10px; align-items: center;">
+        
+        <!-- TU BOTÓN DE CUENTA ORIGINAL (No toques nada de dentro, solo asegúrate que esté aquí) -->
         <button id="main-auth-btn" onclick="toggleAuthModal()" style="
             background: #facc15; color: #1a1a1a; border: 3px solid #fff; padding: 10px 20px; border-radius: 12px; font-family: 'Luckiest Guy', cursive; font-size: 18px; cursor: pointer; box-shadow: 0 5px 0 #b45309, 0 10px 15px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; transition: transform 0.1s;
         " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #b45309'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #b45309'">
             <span id="btn-icon">👤</span> <span id="btn-text">MY ACCOUNT</span>
         </button>
+
+        <!-- EL NUEVO BOTÓN DE DISCORD -->
+        <a href="https://discord.gg/SqABYaf8hG" target="_blank" style="
+            background: #5865F2; /* Color oficial Discord */
+            color: white; 
+            border: 3px solid #fff; 
+            border-radius: 12px; 
+            width: 48px; /* Cuadrado */
+            height: 48px; /* Misma altura aprox que el otro */
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 5px 0 #404EED; 
+            cursor: pointer; 
+            transition: transform 0.1s; 
+            text-decoration: none;
+        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #404EED'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #404EED'">
+            <img src="discord_icon.png" alt="Discord" style="width: 28px; height: 28px; pointer-events: none;">
+        </a>
+
     </div>
 
     <!-- AUTH MODAL -->
@@ -603,6 +626,23 @@
 
   <!-- GAME OVERLAY -->
   <div id="game-screen">
+    <div style="
+        background: #111; 
+        width: 100%; 
+        text-align: center; 
+        padding-top: 5px; 
+        padding-bottom: 2px;
+        z-index: 11; 
+        border-bottom: 1px solid #333;
+    ">
+        <span style="
+            font-family: 'Luckiest Guy'; 
+            color: #facc15; 
+            font-size: 16px; 
+            letter-spacing: 1px; 
+            -webkit-text-stroke: 0.5px #b45309;
+        ">Clash To Play</span>
+    </div>
       <div id="header">
           <span class="blue" id="player-name-ui" style="font-size: 0.8rem;">YOU</span>
           <div id="score"><span class="blue">0</span> - <span class="red">0</span></div>
@@ -642,6 +682,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // --- NETWORKING VARS ---
+let mmBroadcastInterval = null;
 let pvpChannel = null;
 let isPvP = false;
 let mmInterval = null;
@@ -996,26 +1037,30 @@ window.renderSkinsMenu = () => {
 }
 
 // --- MATCHMAKING LOGIC ---
+// --- MODIFIED MATCHMAKING LOGIC ---
 async function startMatchWithBot() {
     isPvP = false;
-    // Buscamos un rival real para copiar su mazo, si no hay nadie, usamos mazo aleatorio
-    const { data } = await supabase.from('players').select('username, deck').neq('username', loggedPlayer ? loggedPlayer.username : '').limit(5);
 
-    if (data && data.length > 0) {
-        const randomRival = data[Math.floor(Math.random() * data.length)];
-        state.enemyName = randomRival.username.toUpperCase();
-        state.enemyDeck = randomRival.deck;
-    } else {
-        state.enemyName = "BOT_CLASH";
-        const allAI = Object.keys(UNIT_TYPES).filter(k => UNIT_TYPES[k].selectable !== false);
-        state.enemyDeck = [...allAI].sort(() => Math.random() - 0.5).slice(0, 8);
-    }
+    // Generador de nombres aleatorios (Sin mirar en BD)
+    const prefixes = ["Juan", "Dark", "Super", "Pro", "Clash", "Mega", "Ultra", "King", "Ghost", "Shadow", "Master", "Kevin", "Alex", "Vegeta"];
+    const suffixes = ["Slayer", "Gamer", "Warrior", "21", "99", "123", "X", "Plays", "YT", "007", "God", "Win", "Rex"];
+    
+    const p1 = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const p2 = suffixes[Math.floor(Math.random() * suffixes.length)];
+    
+    state.enemyName = (p1 + p2).toUpperCase();
+    
+    // Mazo aleatorio para el bot
+    const allAI = Object.keys(UNIT_TYPES).filter(k => UNIT_TYPES[k].selectable !== false);
+    state.enemyDeck = [...allAI].sort(() => Math.random() - 0.5).slice(0, 8);
+
     startGame();
 }
 
 function stopMM() {
     clearInterval(mmInterval);
     clearInterval(mmDotsInterval);
+    clearInterval(mmBroadcastInterval); 
     document.getElementById('matchmaking-overlay').style.display = 'none';
 }
 
@@ -1028,15 +1073,22 @@ window.attemptStartGame = async (mode) => {
     if (mode === 'ranked' && !loggedPlayer) { alert("Login required!"); window.toggleAuthModal(); return; }
     if (state.userDeck.length !== 8) { alert("Complete your deck!"); window.scrollToTab(0); return; }
 
+    // MODO ENTRENAMIENTO (OFFLINE)
     if (mode === 'training') {
-        state.gameMode = 'training'; state.enemyName = "TRAINER"; isPvP = false;
+        state.gameMode = 'training';
+        state.enemyName = "TRAINER";
+        isPvP = false;
         const allAI = Object.keys(UNIT_TYPES).filter(k => UNIT_TYPES[k].selectable !== false);
         state.enemyDeck = [...allAI].sort(() => Math.random() - 0.5).slice(0, 8);
-        startGame(); return;
+        startGame(); 
+        return;
     }
 
+    // MODO RANKED (PVP)
     state.gameMode = 'ranked';
     isPvP = false;
+    
+    // UI Matchmaking
     const mmOverlay = document.getElementById('matchmaking-overlay');
     const mmTimer = document.getElementById('mm-timer');
     const mmDots = document.getElementById('mm-dots');
@@ -1045,60 +1097,92 @@ window.attemptStartGame = async (mode) => {
     let seconds = 0;
     let dotCount = 0;
 
-    mmDotsInterval = setInterval(() => { dotCount = (dotCount + 1) % 4; mmDots.textContent = ".".repeat(dotCount); }, 500);
+    // Animación de puntitos (...)
+    mmDotsInterval = setInterval(() => { 
+        dotCount = (dotCount + 1) % 4; 
+        mmDots.textContent = ".".repeat(dotCount); 
+    }, 500);
 
+    // Conexión a Supabase
     pvpChannel = supabase.channel("global_lobby");
 
     pvpChannel
         .on('broadcast', { event: 'match_request' }, (payload) => {
+            // SOY EL JUGADOR B (EL QUE SE UNE)
+            // Si escucho a alguien pidiendo partida y no soy yo mismo...
             if (!isPvP && payload.payload.user !== loggedPlayer.username) {
+                console.log("Match found! Accepting invitation from:", payload.payload.user);
                 isPvP = true;
                 state.enemyName = payload.payload.user;
                 state.enemyDeck = payload.payload.deck;
-                pvpChannel.send({ type: 'broadcast', event: 'match_accept', payload: { user: loggedPlayer.username, deck: state.userDeck } });
-                stopMM();
-                startGame();
+
+                // Le contesto al Jugador A que acepto
+                pvpChannel.send({ 
+                    type: 'broadcast', 
+                    event: 'match_accept', 
+                    payload: { user: loggedPlayer.username, deck: state.userDeck } 
+                });
+
+                stopMM(); // Dejo de buscar
+                startGame(); // Entro al juego
             }
         })
         .on('broadcast', { event: 'match_accept' }, (payload) => {
+            // SOY EL JUGADOR A (EL QUE CREÓ LA SALA)
+            // Si escucho que alguien aceptó mi solicitud...
             if (!isPvP && payload.payload.user !== loggedPlayer.username) {
+                console.log("Match accepted by:", payload.payload.user);
                 isPvP = true;
                 state.enemyName = payload.payload.user;
                 state.enemyDeck = payload.payload.deck;
-                stopMM();
-                startGame();
+                
+                stopMM(); // Dejo de gritar que busco partida
+                startGame(); // Entro al juego
             }
         })
         .on('broadcast', { event: 'card_played' }, (payload) => {
-            if (isPvP) {
+            // Lógica de partida (cartas)
+            if (isPvP && state.screen === 'game') {
                 const key = payload.payload.key;
                 const cardData = UNIT_TYPES[key];
                 const x = payload.payload.x;
                 const y = payload.payload.y;
 
-                // CORRECCIÓN 1: Identificar si es hechizo o unidad
-                if (cardData.type === 'spell') {
-                    // Si es hechizo, usamos la función de hechizos
+                if (cardData && cardData.type === 'spell') {
                     spawnSpell(key, 'enemy', x, y);
-                } else {
-                    // CORRECCIÓN 2: immediateDeploy debe ser FALSE 
-                    // para que ambos jugadores vean el tiempo de despliegue (reloj sobre la tropa)
+                } else if(cardData) {
                     spawnUnit(key, 'enemy', x, y, false);
                 }
             }
         })
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
-                pvpChannel.send({ type: 'broadcast', event: 'match_request', payload: { user: loggedPlayer.username, deck: state.userDeck } });
+                // AQUÍ ESTÁ EL ARREGLO:
+                // En lugar de enviar la petición una sola vez, la enviamos cada segundo
+                // Así, si el rival entra 3 segundos tarde, verá el siguiente mensaje.
+                
+                const sendRequest = () => {
+                    if(!isPvP) {
+                        pvpChannel.send({ 
+                            type: 'broadcast', 
+                            event: 'match_request', 
+                            payload: { user: loggedPlayer.username, deck: state.userDeck } 
+                        });
+                    }
+                };
+
+                sendRequest(); // Enviar inmediatamente
+                mmBroadcastInterval = setInterval(sendRequest, 1000); // Repetir cada 1s
             }
         });
 
+    // Temporizador de 10s para rendirse y jugar con BOT
     mmInterval = setInterval(() => {
         seconds++;
         mmTimer.textContent = `TIME: ${seconds}s`;
         if (seconds >= 10 && !isPvP) {
-            stopMM();
-            startMatchWithBot();
+            stopMM(); // Cancela intervalos y suscripciones
+            startMatchWithBot(); // Juega contra la IA (con nombre generado)
         }
     }, 1000);
 };
@@ -1397,12 +1481,23 @@ function renderDeckBuilder() {
 }
 function startGame() {
   window.showLoading(() => {
-    document.getElementById('main-menu').style.display = 'none'; document.getElementById('bottom-nav').style.display = 'none'; document.getElementById('game-screen').style.display = 'flex';
+    document.getElementById('main-menu').style.display = 'none'; 
+    document.getElementById('bottom-nav').style.display = 'none'; 
+    document.getElementById('game-screen').style.display = 'flex';
     document.getElementById('auth-ui').style.display = 'none';
     const playerName = loggedPlayer ? loggedPlayer.username.toUpperCase() : "YOU";
     document.getElementById('player-name-ui').textContent = playerName;
-    document.querySelector('#header .red').textContent = state.enemyName;
-    state.screen = 'game'; setTimeout(resize, 50); setupGameMatch(); updateHandUI();
+    const redElements = document.querySelectorAll('#header .red');
+    if (redElements.length > 1) {
+        redElements[1].textContent = state.enemyName;
+    } else {
+        const enemyLabel = document.querySelector('#header > span.red');
+        if(enemyLabel) enemyLabel.textContent = state.enemyName;
+    }
+    state.screen = 'game'; 
+    setTimeout(resize, 50); 
+    setupGameMatch(); 
+    updateHandUI();
   });
 }
 function createTower(team, type, x, y, isKing = false) {
@@ -1578,24 +1673,59 @@ function spawnUnit(key, team, x, y, immediateDeploy = false, unitCountOverride =
   }
 }
 function triggerSpellEffect(key, team, x, y) {
-    const proto = UNIT_TYPES[key]; spawnHitEffect(x, y, proto.color || '#fff', 20);
+    const proto = UNIT_TYPES[key]; 
+    spawnHitEffect(x, y, proto.color || '#fff', 20);
+    
     if (proto.dmg && !proto.isPersistent) doSplashDamage(x, y, proto.radius || proto.splashRadius, proto.dmg, team, proto.stunDuration || 0);
     if (proto.effect === 'FREEZE') applyFreezeEffect(x, y, proto.radius, proto.duration, team);
     if (proto.effect === 'KNOCKBACK') applyKnockback(x, y, proto.radius, proto.knockbackDistance, team);
     if (proto.effect === 'RAGE') applyRageEffect(x, y, team, proto.radius, proto.duration);
-    if (proto.effect === 'SNOWBALL') { applyKnockback(x, y, proto.radius, proto.knockbackDistance, team); applySlowEffect(x, y, proto.radius, proto.slowDuration, team); } // SNOWBALL
-    if (proto.effect === 'SLOW_EXPLOSION') { applySlowEffect(x, y, proto.splashRadius, proto.slowDuration, team); } // ICE GOLEM DEATH
+    if (proto.effect === 'SNOWBALL') { applyKnockback(x, y, proto.radius, proto.knockbackDistance, team); applySlowEffect(x, y, proto.radius, proto.slowDuration, team); }
+    if (proto.effect === 'SLOW_EXPLOSION') { applySlowEffect(x, y, proto.splashRadius, proto.slowDuration, team); } 
+    
     if (proto.effect === 'CLONE') {
         const targets = state.units.filter(u => u.team === team && !u.isBuilding && !u.isClone && !u.isPersistentSpell && !u.isUntargetable && u.hp > 0 && getDistance({x:x, y:y}, u) <= proto.radius);
         targets.forEach(original => {
              spawnUnit(original.key, team, original.x + 20, original.y, true, 1);
-             const clone = state.units[state.units.length - 1]; clone.hp = 1; clone.maxHp = 1; clone.isClone = true; if (clone.hasShield) { clone.shieldHp = 1; clone.maxShieldHp = 1; } clone.lockedTargetId = null; clone.charging = false; clone.chargeTimer = 0; if (clone.x > CANVAS_WIDTH - 10) clone.x = original.x - 20; spawnHitEffect(clone.x, clone.y, '#6ee7b7', 5);
+             const clone = state.units[state.units.length - 1]; 
+             clone.hp = 1; clone.maxHp = 1; clone.isClone = true; 
+             if (clone.hasShield) { clone.shieldHp = 1; clone.maxShieldHp = 1; } 
+             clone.lockedTargetId = null; clone.charging = false; clone.chargeTimer = 0; 
+             if (clone.x > CANVAS_WIDTH - 10) clone.x = original.x - 20; 
+             spawnHitEffect(clone.x, clone.y, '#6ee7b7', 5);
         });
     }
+
+    // --- AQUÍ ESTABA EL ERROR DEL CEMENTERIO ---
     if (proto.effect === 'SPAWN' && proto.isGraveyard) {
-        const gy = { id: Math.random(), key: key, team: team, x: x, y: y, hp: 1, maxHp: 1, type: 'building', state: 'active', icon: proto.icon, color: '#030712', radius: proto.radius, isGraveyard: true, spawnUnit: proto.spawnUnit, spawnInterval: proto.spawnInterval, spawnCount: proto.spawnCount, spawnTimer: 0, durationTimer: proto.duration, spawnsLeft: proto.maxSpawns, particleTimer: 0.1 };
-        state.units.push(gy); for(let i=0; i<15; i++) state.particles.push({x: x+(Math.random()*proto.radius-proto.radius/2), y: y+(Math.random()*proto.radius-proto.radius/2), vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 1.0, color: '#374151'});
+        const gy = { 
+            id: Math.random(), 
+            key: key, 
+            team: team, 
+            x: x, 
+            y: y, 
+            hp: 1, 
+            maxHp: 1, 
+            type: 'building', 
+            isBuilding: true, // <--- ESTO FALTABA (Ahora se dibujará correctamente)
+            state: 'active', 
+            icon: proto.icon, 
+            color: '#030712', 
+            radius: proto.radius, 
+            isGraveyard: true, 
+            spawnUnit: proto.spawnUnit, 
+            spawnInterval: proto.spawnInterval, 
+            spawnCount: proto.spawnCount, 
+            spawnTimer: 0, 
+            durationTimer: proto.duration, 
+            spawnsLeft: proto.maxSpawns, 
+            particleTimer: 0.1 
+        };
+        state.units.push(gy); 
+        for(let i=0; i<15; i++) state.particles.push({x: x+(Math.random()*proto.radius-proto.radius/2), y: y+(Math.random()*proto.radius-proto.radius/2), vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 1.0, color: '#374151'});
     }
+    // -------------------------------------------
+
     if (proto.isPersistent) {
         const persistentSpell = { id: Math.random(), key: key, team: team, x: x, y: y, hp: 1, maxHp: 1, type: 'spell_area', state: 'active', icon: proto.icon, color: proto.color || '#333', radius: proto.radius, isPersistentSpell: true, durationTimer: proto.duration, tickInterval: proto.tickInterval, tickTimer: proto.tickInterval, dmg: proto.dmg || 0, targetType: proto.target, buildingMultiplier: proto.buildingMultiplier || 1, earthquakeUnitDmg: proto.earthquakeUnitDmg, earthquakeBuildingDmg: proto.earthquakeBuildingDmg, earthquakeTowerDmg: proto.earthquakeTowerDmg, onDeathSpawnUnit: proto.onDeathSpawnUnit, onDeathSpawnCount: proto.onDeathSpawnCount };
         state.units.push(persistentSpell);
@@ -1678,8 +1808,32 @@ function triggerActualChampionAbility(champ) {
         case 'SOUL_SUMMON': // Skeleton King
             champ.isChanneling = true; champ.channelTimer = 1.0;
             const currentSouls = champ.souls || 0; const totalSkeletons = 6 + currentSouls; champ.souls = 0;
-            const kingGy = { id: Math.random(), key: 'GRAVEYARD', team: champ.team, x: champ.x, y: champ.y, hp: 1, maxHp: 1, type: 'building', state: 'active', icon: '🪦', color: '#000FFF', radius: 120, isGraveyard: true, spawnUnit: 'SKELETONS', spawnInterval: 0.25, spawnTimer: 0, durationTimer: (totalSkeletons * 0.25) + 1.0, spawnsLeft: totalSkeletons, particleTimer: 0.1, isKingAbility: true, followUnitId: champ.id };
-            state.units.push(kingGy); spawnHitEffect(champ.x, champ.y, '#a855f7', 15);
+            const kingGy = { 
+                id: Math.random(), 
+                key: 'GRAVEYARD', 
+                team: champ.team, 
+                x: champ.x, 
+                y: champ.y, 
+                hp: 1, 
+                maxHp: 1, 
+                type: 'building', 
+                isBuilding: true, // <--- CORRECCIÓN IMPORTANTE
+                state: 'active', 
+                icon: '🪦', 
+                color: 'rgba(20, 20, 20, 0.4)', // <--- COLOR NEGRO CON OPACIDAD
+                radius: 120, 
+                isGraveyard: true, 
+                spawnUnit: 'SKELETONS', 
+                spawnInterval: 0.25, 
+                spawnTimer: 0, 
+                durationTimer: (totalSkeletons * 0.25) + 1.0, 
+                spawnsLeft: totalSkeletons, 
+                particleTimer: 0.1, 
+                isKingAbility: true, 
+                followUnitId: champ.id 
+            };
+            state.units.push(kingGy); 
+            spawnHitEffect(champ.x, champ.y, '#a855f7', 15);
             champ.abilityTimer = champ.abilityCooldown; champ.isAbilityActive = false;
             break;
         case 'EXPLOSIVE_ESCAPE': // Mighty Miner
@@ -2347,8 +2501,8 @@ function drawUnit(ctx, u) {
   if (u.isInvisible) { if (u.hideOnIdle) { ctx.globalAlpha = 1.0; ctx.fillStyle = '#444'; ctx.fillRect(u.x - 20, u.y - 10, 40, 20); ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.strokeRect(u.x - 20, u.y - 10, 40, 20); ctx.fillStyle = u.team === 'player' ? COLORS.player : COLORS.enemy; ctx.fillRect(u.x - 5, u.y - 5, 10, 10); return; } else ctx.globalAlpha = 0.4; }
   if (u.isClone) ctx.globalAlpha = 0.7;
 
-  // DRAW SHADOW (Skip for Graveyard)
-  if (!u.isGraveyard) {
+  // DRAW SHADOW (CORREGIDO: No dibujar sombra para hechizos persistentes)
+  if (!u.isGraveyard && !u.isPersistentSpell) {
       ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(u.x, u.y + 5, u.radius || 15, (u.radius || 15) * 0.5, 0, 0, Math.PI*2); ctx.fill();
   }
 
@@ -2366,14 +2520,19 @@ function drawUnit(ctx, u) {
         ctx.save();
         ctx.globalAlpha = 0.5;
         ctx.lineWidth = 2;
+        // Usa el color definido (para el Rey será negro, para cementerio normal será el del estilo)
         ctx.strokeStyle = u.color || 'rgba(100, 100, 150, 0.8)';
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.arc(u.x, drawY, u.radius, 0, Math.PI*2);
         ctx.stroke();
 
-        // Slight fill for visibility
-        ctx.fillStyle = u.team === 'player' ? 'rgba(0,0,255,0.1)' : 'rgba(255,0,0,0.1)';
+        // Relleno: Si tiene color específico (Rey), úsalo. Si no, usa el estándar azul/rojo.
+        if (u.color && u.color.startsWith('rgba')) {
+             ctx.fillStyle = u.color;
+        } else {
+             ctx.fillStyle = u.team === 'player' ? 'rgba(0,0,255,0.1)' : 'rgba(255,0,0,0.1)';
+        }
         ctx.fill();
 
         ctx.setLineDash([]);
@@ -2387,7 +2546,14 @@ function drawUnit(ctx, u) {
       else if (u.key === 'GOBLINSTEIN_ANTENNA') { ctx.fillStyle = '#666'; ctx.fillRect(u.x - 10, drawY - 20, 20, 20); ctx.beginPath(); ctx.moveTo(u.x, drawY - 20); ctx.lineTo(u.x, drawY - 40); ctx.stroke(); ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(u.x, drawY - 40, 4, 0, Math.PI*2); ctx.fill(); }
       else ctx.fillRect(u.x - 25, drawY - 25, 50, 50);
     }
-  else if (u.isPersistentSpell) { ctx.beginPath(); ctx.arc(u.x, drawY, u.radius, 0, Math.PI*2); ctx.fillStyle = u.key === 'POISON' ? 'rgba(128, 0, 128, 0.3)' : u.key === 'GOBLIN_CURSE' ? 'rgba(92, 184, 92, 0.3)' : 'rgba(139, 69, 19, 0.3)'; ctx.fill(); }
+  else if (u.isPersistentSpell) { 
+      // Dibujado de hechizos persistentes (Veneno, etc)
+      ctx.beginPath(); 
+      ctx.arc(u.x, drawY, u.radius, 0, Math.PI*2); 
+      // Colores específicos
+      ctx.fillStyle = u.key === 'POISON' ? 'rgba(128, 0, 128, 0.3)' : u.key === 'GOBLIN_CURSE' ? 'rgba(92, 184, 92, 0.3)' : 'rgba(139, 69, 19, 0.3)'; 
+      ctx.fill(); 
+  }
   else if (['GOLEM','GIANT','PEKKA','ROYAL_GIANT','SPARKY','LAVA_HOUND','GOLEMITE','GOBLIN_GIANT','GOBLINSTEIN_MONSTER'].includes(u.key) || u.isMegaKnight || u.isElectroGiant) { ctx.fillRect(u.x - 18 - wMod/2, drawY - 25 - hMod, 36 + wMod, 36 + hMod); }
   else if (u.type === 'air') { ctx.beginPath(); ctx.moveTo(u.x, drawY - 20); ctx.lineTo(u.x - 15, drawY + 5); ctx.lineTo(u.x + 15, drawY + 5); ctx.fill(); }
   else if (u.suicide) { ctx.beginPath(); ctx.moveTo(u.x, drawY-15); ctx.arc(u.x, drawY, 10, 0, Math.PI*2); ctx.fill(); }
@@ -2398,7 +2564,7 @@ function drawUnit(ctx, u) {
   if (u.isInferno && u.cooldown > u.attackSpeed * 0.5 && u.target) { ctx.strokeStyle = `rgba(255, ${200 - u.dmgStage * 30}, 0, 1)`; ctx.lineWidth = 3 + u.dmgStage; ctx.beginPath(); ctx.moveTo(u.x, drawY - 5); ctx.lineTo(u.target.x, u.target.y); ctx.stroke(); }
   ctx.lineWidth = 3; ctx.strokeStyle = u.team === 'player' ? COLORS.playerDark : COLORS.enemyDark;
   if (u.isClone) ctx.strokeStyle = '#34d399'; if (u.charging) ctx.strokeStyle = '#facc15'; if (u.isRaged) ctx.strokeStyle = '#f0abfc'; if (u.isSlowed && !u.isFrozen) ctx.strokeStyle = '#7dd3fc'; if (u.isDashSeeking) ctx.strokeStyle = '#fff';
-  if (!u.isGraveyard) ctx.stroke(); // Don't draw selection/team border for graveyard area (handled inside save/restore)
+  if (!u.isGraveyard && !u.isPersistentSpell) ctx.stroke(); // No dibujar borde de equipo para hechizos de área
 
   if (u.isBandit) {
       if (u.banditState === 'charging') {
