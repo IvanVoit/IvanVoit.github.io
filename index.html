@@ -144,14 +144,14 @@
           transition: opacity 0.3s;
           touch-action: pan-y; /* Permite scroll vertical de la página pero captura el horizontal */
       }
-      
+
       /* Cuando arrastramos, quitamos el "imán" para que no de saltos */
-      #main-menu.grabbing { 
-          cursor: grabbing; 
-          scroll-snap-type: none; 
-          scroll-behavior: auto; 
+      #main-menu.grabbing {
+          cursor: grabbing;
+          scroll-snap-type: none;
+          scroll-behavior: auto;
       }
-      
+
       #main-menu::-webkit-scrollbar { display: none; }
 
       .menu-screen {
@@ -784,8 +784,8 @@ function initMenu() {
 
     // Posición inicial: Home (Pestaña del centro, índice 1)
     menu.scrollLeft = window.innerWidth;
-    setTimeout(() => { 
-        menu.style.opacity = '1'; 
+    setTimeout(() => {
+        menu.style.opacity = '1';
     }, 50);
 
     // Sincronizar botones del bottom nav al hacer scroll
@@ -814,7 +814,7 @@ function initMenu() {
         if (!isDown) return;
         isDown = false;
         menu.classList.remove('grabbing');
-        
+
         // Al soltar, forzamos que encaje en la pestaña más cercana
         const targetIndex = Math.round(menu.scrollLeft / window.innerWidth);
         menu.scrollTo({
@@ -841,13 +841,13 @@ function initMenu() {
     window.addEventListener('touchend', stopDrag);
     window.addEventListener('touchmove', moveDrag, { passive: false });
 }
-window.scrollToTab = (index) => { 
+window.scrollToTab = (index) => {
     const menu = document.getElementById('main-menu');
     menu.classList.remove('grabbing'); // Por si acaso
-    menu.scrollTo({ 
-        left: index * window.innerWidth, 
-        behavior: 'smooth' 
-    }); 
+    menu.scrollTo({
+        left: index * window.innerWidth,
+        behavior: 'smooth'
+    });
 }
 
 // --- TROPHY ROAD LOGIC ---
@@ -1070,7 +1070,22 @@ window.attemptStartGame = async (mode) => {
             }
         })
         .on('broadcast', { event: 'card_played' }, (payload) => {
-            if (isPvP) spawnUnit(payload.payload.key, 'enemy', payload.payload.x, payload.payload.y, true);
+            if (isPvP) {
+                const key = payload.payload.key;
+                const cardData = UNIT_TYPES[key];
+                const x = payload.payload.x;
+                const y = payload.payload.y;
+
+                // CORRECCIÓN 1: Identificar si es hechizo o unidad
+                if (cardData.type === 'spell') {
+                    // Si es hechizo, usamos la función de hechizos
+                    spawnSpell(key, 'enemy', x, y);
+                } else {
+                    // CORRECCIÓN 2: immediateDeploy debe ser FALSE 
+                    // para que ambos jugadores vean el tiempo de despliegue (reloj sobre la tropa)
+                    spawnUnit(key, 'enemy', x, y, false);
+                }
+            }
         })
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
