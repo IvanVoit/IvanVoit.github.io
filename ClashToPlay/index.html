@@ -1,0 +1,2659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Clash To Play</title>
+  <style>
+      @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Roboto:wght@400;700&display=swap');
+
+      :root {
+          --bg-color: #1a1a1a;
+          --ui-bg: #222;
+          --card-bg: #333;
+          --elixir-color: #9c27b0;
+          --player-color: #3b82f6;
+          --enemy-color: #ef4444;
+          --accent: #facc15;
+          --champion-color: #fde047;
+      }
+
+      * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+
+      body {
+          margin: 0;
+          overflow: hidden;
+          background-color: var(--bg-color);
+          color: white;
+          font-family: 'Roboto', sans-serif;
+          height: 100vh;
+          width: 100vw;
+      }
+
+      /* --- Main Menu Slider System --- */
+      #main-menu {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          height: 100%;
+          width: 100%;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          scroll-behavior: auto; /* Cambiado de smooth a auto para el inicio */
+          cursor: grab;
+          opacity: 0; /* Añadido: empieza invisible */
+          transition: opacity 0.3s; /* Añadido: para que aparezca suavemente */
+      }
+      #main-menu.active { cursor: grabbing; scroll-snap-type: none; scroll-behavior: auto; }
+      #main-menu::-webkit-scrollbar { display: none; }
+
+      .menu-screen {
+          flex: 0 0 100vw;
+          height: 100%;
+          scroll-snap-align: center;
+          position: relative;
+          padding: 20px 10px 80px 10px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+      }
+
+      /* --- Bottom Navigation --- */
+      #bottom-nav {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 60px;
+          background: #111;
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          border-top: 2px solid #444;
+          z-index: 200;
+      }
+      .nav-btn {
+          background: none;
+          border: none;
+          color: #666;
+          font-family: 'Luckiest Guy', cursive;
+          letter-spacing: 1px;
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+      }
+      .nav-btn.active { color: var(--accent); }
+      .nav-icon { font-size: 24px; margin-bottom: 4px; }
+
+      /* --- TAB 1: DECK BUILDER --- */
+      #tab-deck { background: #1a1a1a; }
+      .builder-header {
+          text-align: center;
+          font-family: 'Luckiest Guy', cursive;
+          letter-spacing: 2px;
+          margin-bottom: 10px;
+          width: 100%;
+      }
+      #my-deck-slots {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 10px;
+          justify-items: center;
+          margin-bottom: 20px;
+          background: #111;
+          padding: 15px;
+          border-radius: 8px;
+          width: 100%;
+          max-width: 320px;
+          margin-left: auto;
+          margin-right: auto;
+      }
+      .deck-slot {
+          width: 50px; height: 65px;
+          border: 2px dashed #555;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          background: #333;
+          cursor: pointer;
+      }
+      .deck-slot.filled { border: 2px solid #fff; background: #3b82f6; }
+
+      #card-collection {
+          flex-grow: 1;
+          overflow-y: auto;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+          padding-bottom: 20px;
+      }
+      .collection-card {
+          width: 60px; height: 80px;
+          background: #333;
+          border: 2px solid #555;
+          border-radius: 6px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          position: relative;
+      }
+      .collection-card.selected { border-color: #4ade80; background: #14532d; opacity: 0.5; }
+      .collection-card .cost {
+          position: absolute; top: 2px; right: 2px; background: var(--elixir-color);
+          border-radius: 50%; width: 16px; height: 16px; font-size: 10px;
+          display: flex; align-items: center; justify-content: center;
+      }
+      #random-deck-btn {
+          margin-top: 10px;
+          background: #60a5fa; color: #000;
+          font-family: 'Luckiest Guy', cursive;
+          letter-spacing: 1px;
+          font-size: 14px; padding: 8px 20px;
+          border: none; border-radius: 30px;
+          box-shadow: 0 4px 0 #3b82f6; cursor: pointer;
+      }
+
+      /* --- TAB 2: HOME --- */
+      #tab-home {
+          background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+          justify-content: center;
+      }
+      .rank-display {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 40px;
+          animation: float 3s ease-in-out infinite;
+      }
+      @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+      .rank-icon { font-size: 80px; margin-bottom: 10px; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+      .rank-name {
+          font-family: 'Luckiest Guy', cursive;
+          font-size: 28px;
+          color: #facc15;
+          -webkit-text-stroke: 1px #854d0e;
+          letter-spacing: 2px;
+      }
+      .rank-trophies { font-size: 18px; color: #cbd5e1; margin-top: 5px; font-weight: bold; }
+
+      #battle-btn-main {
+          background: #facc15;
+          color: #000;
+          font-family: 'Luckiest Guy', cursive;
+          letter-spacing: 2px;
+          font-size: 32px;
+          padding: 20px 60px;
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 6px 0 #b45309, 0 15px 20px rgba(0,0,0,0.4);
+          cursor: pointer;
+          transition: transform 0.1s;
+      }
+      #battle-btn-main:active { transform: translateY(6px); box-shadow: 0 0 0 #b45309; }
+      #battle-btn-main:disabled { background: #555; box-shadow: none; color: #888; transform: none; cursor: not-allowed;}
+
+      /* --- TAB 3: LEADERBOARD --- */
+      #tab-social { background: #1a1a1a; }
+      .leaderboard-container {
+          background: #222;
+          width: 100%; max-width: 400px;
+          border-radius: 10px;
+          padding: 10px;
+          border: 2px solid #444;
+      }
+      .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
+      .lb-row:last-child { border-bottom: none; }
+
+      .lb-rank { font-family: 'Luckiest Guy'; width: 30px; color: #888; font-size: 1.1em; }
+      .lb-rank.top { color: #facc15; }
+      .lb-name { flex-grow: 1; text-align: left; font-weight: bold; }
+      .lb-score { color: #facc15; font-family: 'Luckiest Guy'; letter-spacing: 1px; }
+
+      /* --- GAME SCREEN --- */
+      #game-screen {
+          display: none;
+          position: fixed;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background: var(--bg-color);
+          flex-direction: column;
+          z-index: 500;
+          align-items: center;
+          justify-content: center;
+      }
+      #header { width: 100%; height: 50px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Luckiest Guy', cursive; letter-spacing: 1px; z-index: 10; border-bottom: 2px solid #444; max-width: 540px; }
+      #score { font-size: 1.2rem; }
+      .blue { color: var(--player-color); }
+      .red { color: var(--enemy-color); }
+
+      #game-container {
+          flex-grow: 1;
+          width: 100%;
+          max-width: 540px;
+          position: relative;
+          background-color: #333;
+          overflow: hidden;
+          touch-action: none;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+      }
+      canvas { display: block; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+
+      #ui-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+      #message { font-family: 'Luckiest Guy', cursive; letter-spacing: 2px; font-size: 3rem; text-shadow: 0 4px 0 #000; display: none; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+      @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+      #controls {
+          height: 140px;
+          width: 100%;
+          max-width: 540px;
+          background: var(--ui-bg);
+          border-top: 4px solid #444;
+          display: flex;
+          flex-direction: column;
+          padding: 5px;
+          position: relative;
+      }
+
+      /* ABILITY BUTTON */
+      #ability-btn-container {
+          position: absolute;
+          bottom: 145px;
+          right: 20px;
+          z-index: 100;
+          pointer-events: none;
+      }
+
+      #ability-btn {
+          width: 70px;
+          height: 70px;
+          border-radius: 50%;
+          border: 4px solid #fff;
+          background: radial-gradient(circle, #fbbf24, #b45309);
+          color: white;
+          font-family: 'Luckiest Guy', cursive;
+          font-size: 24px;
+          cursor: pointer;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+          display: none;
+          pointer-events: auto;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          transition: transform 0.1s, filter 0.2s;
+      }
+
+      #ability-btn:active { transform: scale(0.95); }
+      #ability-btn.disabled { filter: grayscale(1); cursor: not-allowed; }
+      #ability-btn.active-anim { animation: pulseAbility 1s infinite; }
+
+      @keyframes pulseAbility {
+          0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+          70% { box-shadow: 0 0 0 20px rgba(251, 191, 36, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+      }
+
+      #ability-cost {
+          position: absolute;
+          bottom: -10px;
+          background: #9c27b0;
+          width: 24px; height: 24px;
+          border-radius: 50%;
+          border: 2px solid #fff;
+          font-size: 14px;
+          display: flex; align-items: center; justify-content: center;
+      }
+
+      #elixir-bar-container { width: 100%; height: 20px; background: #111; border-radius: 10px; margin-bottom: 8px; position: relative; overflow: hidden; border: 2px solid #555; }
+      #elixir-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #9c27b0, #e040fb); transition: width 0.1s linear; }
+      #elixir-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 12px; text-shadow: 1px 1px 2px black; }
+      #deck { display: flex; justify-content: center; gap: 10px; flex-grow: 1; align-content: center; }
+      .card { background: var(--card-bg); border: 2px solid #555; border-radius: 8px; width: 75px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 4px; cursor: pointer; position: relative; transition: transform 0.1s; }
+      .card.active { border-color: #fff; transform: translateY(-5px); box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+      .card.disabled { opacity: 0.5; filter: grayscale(1); }
+      .card-cost { position: absolute; top: -5px; right: -5px; background: var(--elixir-color); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid #fff; }
+
+  </style>
+</head>
+<body>
+    
+    <!-- PANTALLA DE CARGA ÚNICA -->
+    <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; font-family: 'Luckiest Guy', cursive;">
+        <div style="font-size: 50px; animation: pulse 1s infinite;">⚔️</div>
+        <div style="color: white; font-size: 24px; margin-top: 20px; letter-spacing: 2px;">LOADING...</div>
+    </div>
+    <style> @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } } </style>
+    <!-- Botón de Acceso Superior -->
+    <div id="auth-ui" style="position: fixed; top: 15px; right: 15px; z-index: 1000;">
+        <button id="main-auth-btn" onclick="toggleAuthModal()" style="
+            background: #facc15;
+            color: #1a1a1a;
+            border: 3px solid #fff;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-family: 'Luckiest Guy', cursive;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #b45309, 0 10px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.1s;
+        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #b45309'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #b45309'">
+            <span id="btn-icon">👤</span> <span id="btn-text">MY ACCOUNT</span>
+        </button>
+    </div>
+
+    <!-- Modal Estilo Clash -->
+    <div id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center; font-family: 'Luckiest Guy', cursive;">
+
+        <!-- VISTA: LOGIN / REGISTRO (Se ve si no estás logueado) -->
+        <div id="auth-view" style="background: #2d2d2d; padding: 30px; border-radius: 20px; border: 5px solid #555; width: 340px; text-align: center;">
+            <div style="background: #facc15; margin: -30px -30px 20px -30px; padding: 15px; border-radius: 15px 15px 0 0; border-bottom: 5px solid #b45309;">
+                <h2 id="modal-title" style="color:#1a1a1a; margin:0; font-size: 28px;">LOGIN</h2>
+            </div>
+            <input type="text" id="user-name" placeholder="USERNAME" style="width:100%; margin:10px 0; padding:15px; border-radius:10px; border:3px solid #555; background:#1a1a1a; color:white; font-size:16px; text-align:center;">
+            <input type="password" id="user-pass" placeholder="PASSWORD" style="width:100%; margin:10px 0; padding:15px; border-radius:10px; border:3px solid #555; background:#1a1a1a; color:white; font-size:16px; text-align:center;">
+            <button onclick="window.processAuth()" style="width:100%; margin-top:20px; padding:15px; background:#4ade80; color: white; border: none; border-radius: 12px; font-size:22px; cursor:pointer; box-shadow: 0 6px 0 #166534; text-shadow: 2px 2px #000;">CONFIRM!</button>
+            <div style="margin-top: 20px;">
+                <span id="switch-text" style="color: #aaa; font-size: 14px; font-family: 'Roboto';">No account?</span>
+                <button onclick="window.switchMode()" style="background:none; border:none; color:#facc15; font-family:'Luckiest Guy'; cursor:pointer; font-size:14px; text-decoration: underline;">REGISTER HERE</button>
+            </div>
+            <button onclick="window.toggleAuthModal()" style="margin-top:20px; background:none; border:none; color:#ff4444; cursor:pointer;">CLOSE</button>
+        </div>
+
+        <!-- VISTA: PERFIL DE USUARIO (Se ve si YA estás logueado) -->
+        <div id="profile-view" style="display:none; background: #2d2d2d; padding: 30px; border-radius: 20px; border: 5px solid #facc15; width: 340px; text-align: center;">
+            <div style="background: #facc15; margin: -30px -30px 20px -30px; padding: 15px; border-radius: 15px 15px 0 0; border-bottom: 5px solid #b45309;">
+                <h2 id="profile-name" style="color:#1a1a1a; margin:0; font-size: 28px;">PLAYER</h2>
+            </div>
+            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+                <div>
+                    <div style="font-size: 30px;">🏆</div>
+                    <div id="profile-trophies" style="font-size: 24px; color: #facc15;">0</div>
+                    <div style="font-size: 10px; color: #aaa; font-family: 'Roboto';">TROPHIES</div>
+                </div>
+                <div>
+                    <div style="font-size: 30px;">⚔️</div>
+                    <div id="profile-wins" style="font-size: 24px; color: #4ade80;">0</div>
+                    <div style="font-size: 10px; color: #aaa; font-family: 'Roboto';">WINS</div>
+                </div>
+            </div>
+            <div style="color: #facc15; margin-bottom: 10px; font-size: 14px;">YOUR CURRENT DECK</div>
+            <div id="profile-deck-display" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #1a1a1a; padding: 10px; border-radius: 10px;"></div>
+            <button onclick="window.toggleAuthModal()" style="margin-top:20px; width:100%; padding:10px; background:#555; color:white; border:none; border-radius:10px; cursor:pointer;">BACK</button>
+            <button onclick="location.reload()" style="margin-top:10px; background:none; border:none; color:#ff4444; cursor:pointer; font-size:12px;">LOGOUT</button>
+        </div>
+    </div>
+
+  <!-- MAIN MENU CONTAINER -->
+  <div id="main-menu">
+      <!-- TAB 1: DECK -->
+      <div class="menu-screen" id="tab-deck">
+          <div class="builder-header">
+              <h1>Deck <span id="deck-count" style="font-size: 0.6em; color: #888;">(0/8)</span></h1>
+          </div>
+          <div id="my-deck-slots"></div>
+          <button id="random-deck-btn" onclick="generateRandomDeck()">🪄 Auto-Fill</button>
+          <div style="margin: 10px 0; font-size: 12px; color: #888;">Tap cards below to add/remove</div>
+          <div id="card-collection"></div>
+      </div>
+
+      <!-- TAB 2: HOME (BATTLE) -->
+      <div class="menu-screen" id="tab-home">
+          <div class="builder-header" style="margin-top: 40px;">
+              <h1>Clash To Play</h1>
+          </div>
+          <div class="rank-display">
+              <div class="rank-icon">🛡️</div>
+              <div class="rank-name">Arena 1</div>
+              <div class="rank-trophies">🏆 0</div>
+          </div>
+
+          <div id="battle-menu" style="display: flex; flex-direction: column; gap: 15px; width: 100%; align-items: center;">
+              <button id="battle-btn-main" onclick="attemptStartGame('ranked')" style="min-width: 260px; background: #facc15; color: #000; font-family: 'Luckiest Guy', cursive; letter-spacing: 2px; font-size: 28px; padding: 15px; border: none; border-radius: 12px; box-shadow: 0 6px 0 #b45309; cursor: pointer;">
+                  RANKED (PvP)
+              </button>
+              
+              <button id="training-btn" onclick="attemptStartGame('training')" style="min-width: 260px; background: #60a5fa; color: #fff; font-family: 'Luckiest Guy', cursive; letter-spacing: 2px; font-size: 24px; padding: 15px; border: none; border-radius: 12px; box-shadow: 0 6px 0 #1d4ed8; cursor: pointer;">
+                  TRAINING
+              </button>
+          </div>
+      </div>
+
+      <!-- TAB 3: RANKING -->
+      <div class="menu-screen" id="tab-social">
+          <div class="builder-header">
+              <h1>Global Top</h1>
+          </div>
+          <div id="leaderboard-list" class="leaderboard-container">
+              <p style="text-align:center; color:gray; font-family:'Roboto';">Loading rankings...</p>
+          </div>
+      </div>
+  </div>
+
+  <!-- NAVEGACIÓN INFERIOR -->
+  <div id="bottom-nav">
+      <button class="nav-btn" onclick="scrollToTab(0)"><span class="nav-icon">🃏</span>Deck</button>
+      <button class="nav-btn active" onclick="scrollToTab(1)"><span class="nav-icon">⚔️</span>Battle</button>
+      <button class="nav-btn" onclick="scrollToTab(2)"><span class="nav-icon">🏆</span>Rank</button>
+  </div>
+
+  <!-- GAME OVERLAY -->
+  <div id="game-screen">
+      <div id="header">
+          <span class="blue" id="player-name-ui" style="font-size: 0.8rem;">YOU</span>
+          <div id="score"><span class="blue">0</span> - <span class="red">0</span></div>
+          <span class="red" style="font-size: 0.8rem;">TRAINER</span>
+      </div>
+      <div id="game-container">
+          <canvas id="gameCanvas"></canvas>
+          <div id="ui-layer">
+              <div id="message"></div>
+              <button id="play-again-btn" onclick="resetGame()" style="display:none; margin-top: 20px; padding: 10px 20px; font-size: 20px; font-family: 'Luckiest Guy', cursive; background: #4ade80; color: #fff; border: none; border-radius: 10px; cursor: pointer; pointer-events: auto;">OK</button>
+          </div>
+      </div>
+      <div id="controls">
+          <!-- ABILITY BUTTON -->
+          <div id="ability-btn-container">
+            <button id="ability-btn" onclick="activateChampionAbility()">
+                <div id="ability-icon">⚡</div>
+                <div id="ability-cost">1</div>
+            </button>
+          </div>
+
+          <div id="elixir-bar-container">
+              <div id="elixir-fill"></div>
+              <span id="elixir-text">5 / 10</span>
+          </div>
+          <div id="deck"></div>
+      </div>
+  </div>
+  <!-- MODAL DE MATCHMAKING -->
+    <div id="matchmaking-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; z-index: 10000; flex-direction: column; align-items: center; justify-content: center; font-family: 'Luckiest Guy', cursive;">
+        <div style="font-size: 50px; color: #facc15; animation: pulse 1s infinite;">⚔️</div>
+        <div style="color: white; font-size: 30px; margin-top: 20px;">MATCHMAKING<span id="mm-dots"></span></div>
+        <div id="mm-timer" style="font-size: 20px; color: #60a5fa; margin-top: 10px;">TIME: 0s</div>
+        <button onclick="window.cancelMatchmaking()" style="margin-top: 40px; background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Luckiest Guy'; cursor: pointer;">CANCEL</button>
+    </div>
+
+<script type="module">
+
+async function startMatchWithBot() {
+    isPvP = false; 
+    // Buscamos un rival real para copiar su mazo, si no hay nadie, usamos mazo aleatorio
+    const { data } = await supabase.from('players').select('username, deck').neq('username', loggedPlayer.username).limit(5);
+    
+    if (data && data.length > 0) {
+        const randomRival = data[Math.floor(Math.random() * data.length)];
+        state.enemyName = randomRival.username.toUpperCase();
+        state.enemyDeck = randomRival.deck;
+    } else {
+        state.enemyName = "BOT_CLASH";
+        const allAI = Object.keys(UNIT_TYPES).filter(k => UNIT_TYPES[k].selectable !== false);
+        state.enemyDeck = [...allAI].sort(() => Math.random() - 0.5).slice(0, 8);
+    }
+    startGame();
+}
+window.cancelMatchmaking = () => {
+    clearInterval(mmInterval);
+    if (pvpChannel) pvpChannel.unsubscribe();
+    document.getElementById('matchmaking-overlay').style.display = 'none';
+};
+
+let pvpChannel = null;
+let isPvP = false;
+let myPlayerSide = 'bottom'; // 'bottom' o 'top'
+let opponentPresent = false;
+let mmInterval = null;
+
+window.showLoading = (callback) => {
+    const loader = document.getElementById('loading-overlay');
+    loader.style.display = 'flex';
+    setTimeout(() => {
+        if (callback) callback();
+        loader.style.display = 'none';
+    }, 600); // Duración de la pantalla de carga
+};
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+// --- SUPABASE CONFIG ---
+const SUPABASE_URL = 'https://reousjjcwiiutjeyjwzi.supabase.co'
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlb3Vzampjd2lpdXRqZXlqd3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODc3NjUsImV4cCI6MjA4MzU2Mzc2NX0.iUer0BevbRlWurInoN6to-TrjhpmOdtJGYit8zjz8Oo'
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+let loggedPlayer = null;
+let authMode = 'login';
+
+// --- AUTH & CLOUD FUNCTIONS ---
+window.toggleAuthModal = () => {
+    const modal = document.getElementById('auth-modal');
+    if (modal.style.display === 'none') {
+        modal.style.display = 'flex';
+        if (loggedPlayer) {
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'block';
+            updateProfileUI();
+        } else {
+            document.getElementById('auth-view').style.display = 'block';
+            document.getElementById('profile-view').style.display = 'none';
+        }
+    } else { modal.style.display = 'none'; }
+};
+
+window.switchMode = () => {
+    authMode = (authMode === 'login') ? 'register' : 'login';
+    document.getElementById('modal-title').textContent = authMode.toUpperCase();
+};
+
+window.processAuth = async () => {
+    const user = document.getElementById('user-name').value.toLowerCase().trim();
+    const pass = document.getElementById('user-pass').value;
+    if (user.length < 3) return alert("Username too short!");
+
+    if (authMode === 'register') {
+        const { data, error } = await supabase.from('players').insert([{
+            username: user, password: pass, trophies: 0, wins: 0,
+            deck: state.userDeck
+        }]).select();
+        if (error) return alert("User already exists!");
+        loginSuccess(data[0]);
+    } else {
+        const { data, error } = await supabase.from('players').select('*').eq('username', user).single();
+        if (error || data.password !== pass) return alert("Invalid credentials!");
+        loginSuccess(data);
+    }
+};
+
+function loginSuccess(data) {
+    loggedPlayer = data;
+    document.getElementById('btn-text').textContent = data.username.toUpperCase();
+    document.getElementById('btn-icon').textContent = "👑";
+    document.getElementById('main-auth-btn').style.background = "#4ade80";
+    document.getElementById('auth-modal').style.display = 'none';
+
+    if(data.deck && data.deck.length > 0) {
+        state.userDeck = data.deck;
+    }
+
+    document.querySelector('.rank-trophies').textContent = `🏆 ${data.trophies}`;
+
+    renderDeckBuilder();
+    updateProfileUI(); // ESTO DIBUJA EL MAZO EN TU CUENTA
+    fetchLeaderboard();
+}
+
+function updateProfileUI() {
+    // 1. Actualizar textos básicos
+    document.getElementById('profile-name').textContent = loggedPlayer.username.toUpperCase();
+    document.getElementById('profile-trophies').textContent = loggedPlayer.trophies;
+    document.getElementById('profile-wins').textContent = loggedPlayer.wins || 0;
+
+    // 2. Dibujar el mazo en el perfil
+    const profileDeckContainer = document.getElementById('profile-deck-display');
+    profileDeckContainer.innerHTML = ''; // Limpiar lo anterior
+
+    if (loggedPlayer.deck && Array.isArray(loggedPlayer.deck)) {
+        loggedPlayer.deck.forEach(cardKey => {
+            const cardData = UNIT_TYPES[cardKey];
+            if (cardData) {
+                const miniCard = document.createElement('div');
+                miniCard.style.cssText = `
+                    background: #333;
+                    border: 1px solid ${RARITY_COLORS[cardData.rarity] || '#555'};
+                    border-radius: 5px;
+                    padding: 5px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    font-size: 18px;
+                `;
+                miniCard.innerHTML = `
+                    <span>${cardData.icon}</span>
+                    <span style="font-size: 8px; color: #aaa;">${cardData.cost}</span>
+                `;
+                profileDeckContainer.appendChild(miniCard);
+            }
+        });
+    } else {
+        profileDeckContainer.innerHTML = '<div style="grid-column: 1/5; font-size: 12px; color: #666;">No deck saved</div>';
+    }
+}
+
+async function fetchLeaderboard() {
+    const { data, error } = await supabase.from('players').select('username, trophies').order('trophies', { ascending: false }).limit(10);
+    if (error) return;
+    const lbList = document.getElementById('leaderboard-list');
+    lbList.innerHTML = '';
+    data.forEach((player, index) => {
+        const isMe = loggedPlayer && player.username === loggedPlayer.username;
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1;
+        lbList.innerHTML += `<div class="lb-row" style="${isMe ? 'background: #3b82f644;' : ''}">
+            <span class="lb-rank">${medal}</span>
+            <span class="lb-name">${player.username.toUpperCase()}</span>
+            <span class="lb-score">🏆 ${player.trophies}</span>
+        </div>`;
+    });
+}
+
+window.saveGameToCloud = async (isWin) => {
+    if (!loggedPlayer) return; // Si no hay login, no intentamos guardar nada
+
+    const btnText = document.getElementById('btn-text');
+    const originalName = loggedPlayer.username.toUpperCase();
+    btnText.textContent = "SAVING...";
+
+    try {
+        if (isWin === null) {
+            await supabase.from('players').update({ deck: state.userDeck }).eq('username', loggedPlayer.username);
+            loggedPlayer.deck = [...state.userDeck];
+        } else {
+            const { data, error } = await supabase.rpc('handle_match_result', {
+                p_username: loggedPlayer.username,
+                p_password: loggedPlayer.password,
+                p_win: isWin,
+                p_deck: state.userDeck
+            });
+
+            if (!error && data && data.length > 0) {
+                loggedPlayer.trophies = data[0].new_trophies;
+                loggedPlayer.wins = data[0].new_wins;
+                loggedPlayer.deck = [...state.userDeck];
+                document.querySelector('.rank-trophies').textContent = `🏆 ${loggedPlayer.trophies}`;
+            }
+        }
+        updateProfileUI();
+    } catch (e) {
+        console.error("Cloud Error:", e);
+    } finally {
+        btnText.textContent = originalName;
+    }
+};
+/** CLASH ENGINE + MONK 3-HIT COMBO + COOLDOWN AFTER ABILITY + LITTLE PRINCE LOGIC **/
+
+// --- SCROLL MENU LOGIC ---
+function initMenu() {
+    const menu = document.getElementById('main-menu');
+
+    // 1. Posicionar el scroll instantáneamente en la pestaña central (Battle)
+    menu.scrollLeft = window.innerWidth;
+
+    // 2. Hacer el menú visible ahora que ya está en la posición correcta
+    setTimeout(() => {
+        menu.style.opacity = '1';
+        menu.style.scrollBehavior = 'smooth'; // Activamos el movimiento suave para después
+    }, 50);
+
+    // --- El resto de los listeners se mantienen igual ---
+    menu.addEventListener('scroll', () => {
+        const index = Math.round(menu.scrollLeft / window.innerWidth);
+        const btns = document.querySelectorAll('.nav-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        if(btns[index]) btns[index].classList.add('active');
+    });
+    let isDown = false, startX, scrollLeft;
+    menu.addEventListener('mousedown', (e) => { isDown = true; menu.classList.add('active'); startX = e.pageX - menu.offsetLeft; scrollLeft = menu.scrollLeft; });
+    menu.addEventListener('mouseleave', () => { isDown = false; menu.classList.remove('active'); snapToNearest(menu); });
+    menu.addEventListener('mouseup', () => { isDown = false; menu.classList.remove('active'); snapToNearest(menu); });
+    menu.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); const x = e.pageX - menu.offsetLeft; const walk = (x - startX) * 1.5; menu.scrollLeft = scrollLeft - walk; });
+    function snapToNearest(el) { const w = window.innerWidth; el.scrollTo({ left: Math.round(el.scrollLeft / w) * w, behavior: 'smooth' }); }
+}
+window.scrollToTab = (index) => {
+    // Quitamos el showLoading para que sea instantáneo
+    document.getElementById('main-menu').scrollTo({
+        left: index * window.innerWidth,
+        behavior: 'smooth'
+    });
+}
+let mmDotsInterval = null;
+
+window.attemptStartGame = async (mode) => {
+    if (mode === 'ranked' && !loggedPlayer) { alert("Login required!"); window.toggleAuthModal(); return; }
+    if (state.userDeck.length !== 8) { alert("Complete your deck!"); window.scrollToTab(0); return; }
+
+    if (mode === 'training') {
+        state.gameMode = 'training'; state.enemyName = "TRAINER"; isPvP = false;
+        const allAI = Object.keys(UNIT_TYPES).filter(k => UNIT_TYPES[k].selectable !== false);
+        state.enemyDeck = [...allAI].sort(() => Math.random() - 0.5).slice(0, 8);
+        startGame(); return;
+    }
+
+    state.gameMode = 'ranked';
+    isPvP = false;
+    const mmOverlay = document.getElementById('matchmaking-overlay');
+    const mmTimer = document.getElementById('mm-timer');
+    const mmDots = document.getElementById('mm-dots');
+    mmOverlay.style.display = 'flex';
+    
+    let seconds = 0;
+    let dotCount = 0;
+    
+    // Animación de puntos (...)
+    mmDotsInterval = setInterval(() => {
+        dotCount = (dotCount + 1) % 4;
+        mmDots.textContent = ".".repeat(dotCount);
+    }, 500);
+
+    pvpChannel = supabase.channel("global_lobby");
+
+    pvpChannel
+        .on('broadcast', { event: 'match_request' }, (payload) => {
+            if (!isPvP && payload.payload.user !== loggedPlayer.username) {
+                isPvP = true;
+                state.enemyName = payload.payload.user;
+                state.enemyDeck = payload.payload.deck;
+                pvpChannel.send({ type: 'broadcast', event: 'match_accept', payload: { user: loggedPlayer.username, deck: state.userDeck } });
+                stopMM();
+                startGame();
+            }
+        })
+        .on('broadcast', { event: 'match_accept' }, (payload) => {
+            if (!isPvP && payload.payload.user !== loggedPlayer.username) {
+                isPvP = true;
+                state.enemyName = payload.payload.user;
+                state.enemyDeck = payload.payload.deck;
+                stopMM();
+                startGame();
+            }
+        })
+        .on('broadcast', { event: 'card_played' }, (payload) => {
+            if (isPvP) spawnUnit(payload.payload.key, 'enemy', payload.payload.x, payload.payload.y, true);
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                pvpChannel.send({ type: 'broadcast', event: 'match_request', payload: { user: loggedPlayer.username, deck: state.userDeck } });
+            }
+        });
+
+    mmInterval = setInterval(() => {
+        seconds++;
+        mmTimer.textContent = `TIME: ${seconds}s`;
+
+        if (seconds >= 10 && !isPvP) {
+            stopMM();
+            startMatchWithBot(); // Nadie apareció, vamos con bot
+        }
+    }, 1000);
+};
+
+function stopMM() {
+    clearInterval(mmInterval);
+    clearInterval(mmDotsInterval);
+    document.getElementById('matchmaking-overlay').style.display = 'none';
+}
+
+window.cancelMatchmaking = () => {
+    stopMM();
+    if (pvpChannel) pvpChannel.unsubscribe();
+};
+
+// Función para cuando se encuentra un humano
+function acceptMatch(opponentData) {
+    isPvP = true;
+    state.enemyName = opponentData.user;
+    state.enemyDeck = opponentData.deck;
+    myPlayerSide = 'bottom'; // El que encuentra suele ser bottom en su pantalla
+    
+    // Enviamos confirmación al otro para que él también empiece
+    pvpChannel.send({
+        type: 'broadcast',
+        event: 'match_accept',
+        payload: { user: loggedPlayer.username, deck: state.userDeck }
+    });
+    
+    startGame();
+}
+
+// --- CONFIG ---
+const FPS = 60;
+const ELIXIR_RATE = 2.8;
+const CANVAS_WIDTH = 540;
+const CANVAS_HEIGHT = 960;
+const TILE_SIZE = 30;
+
+const COLORS = {
+  player: '#4eadef', playerDark: '#f4b331',
+  enemy: '#dc564b', enemyDark: '#b91c1c',
+  grass: '#a5c248', grassAccent: '#7e9c3f', river: '#2196f3',
+  bridge: '#8d6e63', road: '#f4b331',
+  towerBlue: '#b3b3b3', towerRed: '#b3b3b3'
+};
+const RARITY_COLORS = {
+    common: '#b3b3b3', rare: '#ff8c00', epic: '#9932cc',
+    legendary: '#00ced1', champion: '#fde047',
+    spell: '#00ced1', auxiliary: '#555'
+};
+
+const UNIT_TYPES = {
+  ICE_SPIRIT: { name: 'Ice Spirit', cost: 1, hp: 230, dmg: 207, speed: 70, range: 50, attackSpeed: 0.1,stunDuration: 1.2, icon: '🧊', type: 'ground', count: 1, color: '#FFFFFF', target: 'any', deployTime: 1, suicide: true, splash: true, splashRadius: 80, rarity: 'common' },
+  ELECTRO_SPIRIT: { name: 'Electro Spirit', cost: 1, hp: 190, dmg: 84, speed: 70, range: 50, attackSpeed: 0.1,icon: '〰️', type: 'ground', count: 1, color: '#40e0d0', target: 'any', deployTime: 1, stunDuration: 0.5, suicide: true,isEChainer: true, chainCount: 9, chainRange: 60, chainDmg: 84, chainStunDuration: 0.5, rarity: 'common'},
+  SKELETONS: { name: 'Skeletons', cost: 1, hp: 81, dmg: 81, speed: 50, range: 15, attackSpeed: 1.0, icon: '💀', type: 'ground', count: 3, color: '#e5e7eb', target: 'ground', deployTime: 1, rarity: 'common' },
+  BATS: { name: 'Bats', cost: 2, hp: 81, dmg: 81, speed: 80, range: 36, attackSpeed: 1.3, icon: '🦇', type: 'air', count: 5, color: '#7c3aed', target: 'any', deployTime: 1, rarity: 'common' },
+  BERSERKER: { name: 'Berserker', cost: 2, hp: 896, dmg: 102, speed: 50, range: 24, attackSpeed: 0.6, icon: '🪚', type: 'ground', count: 1, color: '#e5e7eb', target: 'ground', deployTime: 1, rarity: 'common' },
+  FIRE_SPIRIT: { name: 'Fire Spirit', cost: 1, hp: 209, dmg: 207, speed: 70, range: 50, attackSpeed: 0.1, icon: '❤️‍🔥', type: 'ground', count: 1, color: '#ef4444', target: 'any', deployTime: 1, suicide: true, splash: true, splashRadius: 60, rarity: 'common' },
+  GOBLINS: { name: 'Goblins', cost: 2, hp: 202, dmg: 120, speed: 70, range: 15, attackSpeed: 1.1, icon: '🔪', type: 'ground', count: 3, color: '#16a34a', target: 'ground', deployTime: 1, rarity: 'common' },
+  SPEAR_GOBLINS: { name: 'Javelin Goblins', cost: 2, hp: 133, dmg: 81, speed: 70, range: 150, attackSpeed: 1.7, icon: '🖊', type: 'ground', count: 3, color: '#16a34a', target: 'any', deployTime: 1, rarity: 'common' },
+  ZAP: { name: 'Zap', cost: 2, icon: '⚡️', type: 'spell', dmg: 192, radius: 75, stunDuration: 0.5, target: 'any', rarity: 'common', animType: 'cast_delay', castTime: 0.2, color: '#00ffff' },
+  SNOWBALL: { name: 'Snowball', cost: 2, icon: '⚪', type: 'spell', dmg: 192, radius: 50, target: 'any', rarity: 'common', animType: 'projectile_arc', speed: 600, color: '#e0f2fe', effect: 'SNOWBALL', knockbackDistance: 20, slowDuration: 2.5, projectileIcon: '⚪' },
+  ARCHERS: { name: 'Archers', cost: 3, hp: 304, dmg: 112, speed: 40, range: 150, attackSpeed: 1.0, icon: '🏹', type: 'ground', count: 2, color: '#f472b6', target: 'any', deployTime: 1, rarity: 'common' },
+  FIRECRACKER: { name: 'Firecracker', cost: 3, hp: 252, dmg: 64, speed: 60, range: 180, attackSpeed: 3.0, icon: '🎉', type: 'ground', count: 1, color: '#e11d48', target: 'any', deployTime: 1, rarity: 'common', isFirecracker: true, recoilDistance: 40, shrapnelCount: 5 },
+  BOMBER: { name: 'Bomber', cost: 2, hp: 304, dmg: 225, speed: 40, range: 135, attackSpeed: 1.8, icon: '💣', type: 'ground', count: 1, color: '#fff', target: 'ground', deployTime: 1, splash: true, splashRadius: 50, rarity: 'common' },
+  CANNON: { name: 'Cannon', cost: 3, maxHp: 824, dmg: 120, speed: 0, range: 165, attackSpeed: 1.0, icon: '🔭', type: 'building', count: 1, color: '#7f1d1d', target: 'ground', deployTime: 1, duration: 30, hpDecayPerSecond: 27.4, rarity: 'common' },
+  KNIGHT: { name: 'Knight', cost: 3, hp: 1766, dmg: 202, speed: 40, range: 36, attackSpeed: 1.2, icon: '🤺', type: 'ground', count: 1, color: '#fcd34d', target: 'ground', deployTime: 1, rarity: 'common' },
+  MINIONS: { name: 'Minions', cost: 3, hp: 230, dmg: 107, speed: 50, range: 75, attackSpeed: 1.1, icon: '🐦‍⬛', type: 'air', count: 3, color: '#818cf8', target: 'any', deployTime: 1, rarity: 'common' },
+  ARROWS: { name: 'Arrows', cost: 3, icon: '🎯', type: 'spell', dmg: 366, radius: 105, target: 'any', rarity: 'common', animType: 'projectile_volley', speed: 800, color: '#8b0000' },
+  ROYAL_DELIVERY: { name: 'Royal Delivery', cost: 3, icon: '📦', type: 'spell', deployTime: 2, dmg: 437, radius: 90, target: 'any', spawnUnit: 'ROYAL_RECRUIT', spawnCount: 1, rarity: 'common', territoryRestricted: true, animType: 'projectile_arc', speed: 200, projectileIcon: '📦' },
+  GOBLIN_GANG: { name: 'Goblin Gang',cost: 3,icon: '♻️',type: 'spell',radius: 60,target: 'ground',deployTime:1,rarity: 'common',spawnUnits: ['GOBLINS', 'SPEAR_GOBLINS'],spawnUnitCounts: [3, 3],territoryRestricted: true, },
+  SKELETON_BARREL: { name: 'Skeleton Barrel', cost: 3, hp: 532, dmg: 145, speed: 50, range: 0, attackSpeed: 0, icon: '🎱️', type: 'air', count: 1, color: '#666666', target: 'building', deployTime: 1, onDeathEffect: 'SKELETONS', deathSpawnCount: 6, rarity: 'common' },
+  SKELETON_DRAGONS: { name: 'Skele Dragons', cost: 4, hp: 560, dmg: 161, speed: 50, range: 105, attackSpeed: 1.9, icon: '🐚', type: 'air', count: 2, color: '#9ca3af', target: 'any', deployTime: 1, rarity: 'common' },
+  TESLA: { name: 'Tesla', cost: 4, maxHp: 1152, dmg: 220, speed: 0, range: 165, attackSpeed: 1.1, icon: '⛲' ,type: 'building', count: 1, color: '#ffd700', target: 'any', deployTime: 1, duration: 40, hpDecayPerSecond: 30, isRoyalGhost: true, invisibleDelay: 1.2, rarity: 'common' },
+  BARBARIANS: { name: 'Barbarians', cost: 5, hp: 670, dmg: 192, speed: 40, range: 21, attackSpeed: 1.3, icon: '😠', type: 'ground', count: 5, color: '#facc15', target: 'ground', deployTime: 1, rarity: 'common' },
+  MINION_HORDE: { name: 'Minion Horde', cost: 5, hp: 230, dmg: 107, speed: 50, range: 75, attackSpeed: 1.1, icon: '🐦‍⬛', type: 'air', count: 6, color: '#818cf8', target: 'any', deployTime: 1, rarity: 'common' },
+  MORTAR: { name: 'Mortar', cost: 4, maxHp: 1369, dmg: 266, speed: 0, range: 290, minRange: 105, attackSpeed: 5.0, icon: '☕', type: 'building', count: 1, color: '#78716c', target: 'ground', deployTime: 3.5, duration: 30, hpDecayPerSecond: 45.6, splash: true, splashRadius: 60, rarity: 'common' },
+  RASCALS: { name: 'Rascals',cost: 5,icon: '👨‍👦‍👦',type: 'spell',radius: 60,target: 'ground',deployTime:1,rarity: 'common',spawnUnits: ['BOY', 'GIRL'],spawnUnitCounts: [1, 2],territoryRestricted: true, },
+  ROYAL_GIANT: { name: 'Royal Giant', cost: 6, hp: 3164, dmg: 307, speed: 20, range: 150, attackSpeed: 1.7, icon: '👑', type: 'ground', count: 1, color: '#b45309', target: 'building', deployTime: 2, rarity: 'common' },
+  ELITE_BARBS: { name: 'Elite Barbarians', cost: 6, hp: 1776, dmg: 508, speed: 40, range: 36, attackSpeed: 1.4, icon: '👿', type: 'ground', count: 2, color: '#facc15', target: 'ground', deployTime: 1, rarity: 'common' },
+  ROYAL_RECRUITS: { name: 'Royal Recruits', cost: 7, hp: 547, dmg: 133, speed: 40, range: 48, attackSpeed: 1.3, icon: '🛡️', type: 'ground', count: 6, color: '#a3a3a3', target: 'ground', deployTime: 1, hasShield: true, maxShieldHp: 240, rarity: 'common', isLineDeployment: true },
+
+  HEAL_SPIRIT: { name: 'Heal Spirit', cost: 1, hp: 230, dmg: 100, speed: 70, range: 50, attackSpeed: 0.1, icon: '✨', type: 'ground', count: 1, color: '#90ee90', target: 'ally', deployTime: 0.5, suicide: true, healAmount: 400, healRadius: 150, rarity: 'rare' },
+  ICE_GOLEM: { name: 'Ice golem', cost: 2, hp: 1198, dmg: 84, speed: 20, range: 22.5, attackSpeed: 2.5, icon: '⛄', type: 'ground', count: 1, color: '#bae6fd', target: 'building', deployTime: 1, rarity: 'rare', onDeathEffect: 'FROST_NOVA', deathSpawnCount: 1, slowDuration: 3.0 },
+  SUSPICIOUS_BUSH: {name: 'Suspicious Bush', cost: 2,hp: 81,dmg: 0,speed: 40,range: 20,attackSpeed: 0.1,icon: '🌳', type: 'ground',count: 1,color: '#166534', target: 'building',deployTime: 1,rarity: 'rare',suicide: true,onDeathEffect: 'GOBUSH',deathSpawnCount: 2, isRoyalGhost: true, invisibleDelay: 0, isBush: true},
+  MEGA_MINION: { name: 'Mega Minion', cost: 3, hp: 837, dmg: 312, speed: 40, range: 48, attackSpeed: 1.5, icon: '🎙️', type: 'air', count: 1, color: '#4b5563', target: 'any', deployTime: 1, rarity: 'rare' },
+  FIREBALL: { name: 'Fireball', cost: 3, icon: '☄️', type: 'spell', dmg: 688, radius: 75, target: 'any', rarity: 'rare', animType: 'projectile_arc', speed: 500, color: '#f97316' },
+  EARTHQUAKE: { name: 'Earthquake', cost: 3, icon: '🏺', type: 'spell', dmg: 84, radius: 105, target: 'ground', rarity: 'rare', duration: 3.0, tickInterval: 1.0, isPersistent: true, earthquakeUnitDmg: 84, earthquakeBuildingDmg: 287, earthquakeTowerDmg: 53, animType: 'cast_delay', castTime: 0.2, color: '#8B4513' },
+  DART_GOBLIN: { name: 'Dart Goblin', cost: 3, hp: 261, dmg: 156, speed: 70, range: 195, attackSpeed: 0.8, icon: '🪈', type: 'ground', count: 1, color: '#16a34a', target: 'any', deployTime: 1, rarity: 'rare' },
+  TOMBSTONE: { name: 'Tombstone', cost: 4, maxHp: 529, speed: 0, icon: '🪦', type: 'building', count: 1, color: '#9ca3af', deployTime: 1, spawnUnit: 'SKELETONS', spawnInterval: 3.5, duration: 30, hpDecayPerSecond: 17.6, spawnCount: 2, spawnTimer: 3.5,onDeathEffect: 'SKELETONS', deathSpawnCount: 4, rarity: 'rare' },
+  BATTLE_RAM: { name: 'Battle Ram', cost: 4, hp: 967, dmg: 286, speed: 40, range: 15, attackSpeed: 1.0, icon: '🏈', type: 'ground', count: 1, color: '#a0522d', target: 'building', deployTime: 1, charge: true, baseSpeed: 40, onDeathEffect: 'BARBARIANS', deathSpawnCount: 2, rarity: 'rare' },
+  BOMB_TOWER: { name: 'Bomb Tower', cost: 4, maxHp: 1356, dmg: 222, speed: 0, range: 180, attackSpeed: 1.8, icon: '💣', type: 'building', count: 1, color: '#40e0d0', target: 'ground', splash: true, splashRadius: 50, deployTime: 1, duration: 30, hpDecayPerSecond: 45.2, onDeathEffect: 'GIANT_BOMB', deathSpawnCount: 1, rarity: 'rare' },
+  FURNACE: { name: 'Furnace', cost: 4, maxHp: 727, dmg: 179, speed: 20, range: 180, attackSpeed: 1.8, icon: '♨️', type: 'Ground', count: 1, color: '#a3a3a3', target: 'any', deployTime: 1, splash: true, splashRadius: 60, spawnUnit: 'FIRE_SPIRIT', spawnInterval: 7, spawnCount: 1, spawnTimer: 7, rarity: 'rare' },
+  FLYING_MACHINE: { name: 'Flying Machine', cost: 4, hp: 614, dmg: 171, speed: 60, range: 180, attackSpeed: 1.1, icon: '🚁', type: 'air', count: 1, color: '#facc15', target: 'any', deployTime: 1, rarity: 'rare' },
+  GOBLIN_CAGE: { name: 'Goblin Cage', cost: 4, maxHp: 780, dmg: 0, speed: 0, range: 0, attackSpeed: 0, icon: '🥅', type: 'building', deployTime: 1, count: 1, color: '#a0522d', target: 'any', onDeathEffect: 'GOBLIN_BRUISER', duration: 20, hpDecayPerSecond: 39, rarity: 'rare' },
+  GOB_HUT: { name: 'Goblin Hut', cost: 4, maxHp: 1228, speed: 0, icon: '🛖', type: 'building', count: 1, color: '#F5F5DC', deployTime: 1, spawnUnit: 'GOB', spawnInterval: 4, duration: 30, hpDecayPerSecond: 40.9, spawnCount: 1, spawnTimer: 1,onDeathEffect: 'GOB', deathSpawnCount: 2, rarity: 'rare' },
+  HOG_RIDER: { name: 'Hog Rider', cost: 4, hp: 1697, dmg: 317, speed: 70, range: 24, attackSpeed: 1.6, icon: '🐗', type: 'ground', count: 1, color: '#78350f', target: 'building', deployTime: 1, rarity: 'rare', canJumpRiver: true },
+  MINI_PEKKA: { name: 'Mini Pekka', cost: 4, hp: 1433, dmg: 755, speed: 50, range: 24, attackSpeed: 1.6, icon: '🤖', type: 'ground', count: 1, color: '#312e81', target: 'ground', deployTime: 1, rarity: 'rare' },
+  MUSKETEER: { name: 'Musketeer', cost: 4, hp: 721, dmg: 217, speed: 40, range: 180, attackSpeed: 1.0, icon: '💂', type: 'ground', count: 1, color: '#a78bfa', target: 'any', deployTime: 1, rarity: 'rare' },
+  VALKYRIE: { name: 'Valkyrie', cost: 4, hp: 1907, dmg: 266, speed: 40, range: 36, attackSpeed: 1.5, icon: '🪓', type: 'ground', count: 1, color: '#ea580c', target: 'ground', deployTime: 1, splash: true, splashRadius: 60, rarity: 'rare' },
+  ZAPPIES: { name: 'Zappies', cost: 4, hp: 529, dmg: 117, speed: 40, range: 135, attackSpeed: 2.1, icon: '🛎️', type: 'ground', count: 3, color: '#ffd700', target: 'any', deployTime: 1, stunDuration: 0.5, rarity: 'rare' },
+  GIANT: { name: 'Giant', cost: 5, hp: 4090, dmg: 253, speed: 20, range: 36, attackSpeed: 1.5, icon: '👊', type: 'ground', count: 1, color: '#b45309', target: 'building', deployTime: 1, rarity: 'rare' },
+  INFERNO_TOWER: { name: 'Inferno Tower', cost: 5, hp: 1748, dmg: 43, speed: 0, range: 180, attackSpeed: 0.4, icon: '🕯️​', type: 'building', count: 1, color: '#f97316', target: 'any', deployTime: 1, isInferno: true, dmgStage: 1, baseSpeed: 50, baseAttackSpeed: 0.4, duration: 30, hpDecayPerSecond: 58.3, rarity: 'rare' },
+  ROYAL_HOGS: { name: 'Royal Hogs', cost: 5, hp: 837, dmg: 74, speed: 70, range: 21, attackSpeed: 1.2, icon: '🐖', type: 'ground', count: 4, color: '#dc2626', target: 'building', deployTime: 1, rarity: 'rare', canJumpRiver: true },
+  WIZARD: { name: 'Wizard', cost: 5, hp: 755, dmg: 281, speed: 40, range: 165, attackSpeed: 1.4, icon: '🧙🏻‍♂️', type: 'ground', count: 1, color: '#3b82f6', target: 'any', deployTime: 1, splash: true, splashRadius: 50, rarity: 'rare' },
+  BARB_HUT: { name: 'Barbarian Hut', cost: 6, maxHp: 1164, speed: 0, icon: '⚔️', type: 'building', count: 1, color: '#facc15', deployTime: 1, spawnUnit: 'BARBARIANS', spawnInterval: 10, duration: 30, hpDecayPerSecond: 38.8, spawnCount: 3,onDeathEffect: 'BARBARIANS', deathSpawnCount: 1, rarity: 'rare' },
+  ROCKET: { name: 'Rocket', cost: 6, icon: '🚀', type: 'spell', dmg: 371, radius: 60, deployTime: 2,target: 'any', rarity: 'rare', animType: 'projectile_arc', speed: 150, projectileIcon: '🚀' },
+  ELITE_MUSKETEERS: { name: 'Three Musketeers', cost: 9, icon: '👩‍👧‍👧', deployTime: 1, type: 'spell', deployTime: 1, dmg: 0, radius: 60, target: 'ground', spawnUnit: 'EMUSKETEER', spawnCount: 3, rarity: 'rare', territoryRestricted: true, animType: 'cast_delay', castTime: 0.1 },
+  ELIXIR_COLLECTOR: { name: 'Elixir Collector', cost: 6, maxHp: 1070, speed: 0, icon: '🫐', type: 'building', count: 1, color: '#ec4899', target: 'none', deployTime: 1, duration: 86, hpDecayPerSecond: 12.4, rarity: 'rare', produceElixir: true, productionInterval: 12, spawnTimer: 0,productionAmount: 1 },
+  ELIXIR_GOLEM: { name: 'Elixir Golem', cost: 3, hp: 1260, dmg: 211, speed: 30, range: 24, attackSpeed: 1.3, icon: '🟣', type: 'ground', count: 1, color: '#d946ef', target: 'building', deployTime: 1, rarity: 'rare', onDeathEffect: 'ELIXIR_GOLEMITE', deathSpawnCount: 2  , giveElixirOnDeath: 1},
+  BATTLE_HEALER: { name: 'Battle Healer', cost: 4, hp: 1584, dmg: 123, speed: 45, range: 48, attackSpeed: 1.5, icon: '👼', type: 'ground', count: 1, color: '#fbcfe8', target: 'ground', deployTime: 1, rarity: 'rare', healOnHit: true, healAmount: 96, healRadius: 100 },
+
+  BARBARIAN_BARREL: { name: 'Barbarian Barrel', cost: 2, icon: '🛢️', type: 'spell', dmg: 230, radius: 70, target: 'ground', rarity: 'epic', territoryRestricted: true, isRolling: true, rectWidth: 60, range: 150, speed: 200, spawnUnit: 'BARBARIANS', spawnCount: 1 },
+  GOBLIN_CURSE: { name: 'Goblin Curse', cost: 2, icon: '🤢', type: 'spell', dmg: 30, radius: 90, target: 'any', rarity: 'epic', duration: 6.0, isPersistent: true, onDeathSpawnUnit: 'GOBLINS', onDeathSpawnCount: 1, color: '#5cb85c', tickInterval: 1.0, animType: 'cast_delay', castTime: 0.2 },
+  RAGE_SPELL: { name: 'Rage Spell', cost: 2, icon: '🧼', type: 'spell', dmg: 179, radius: 90, target: 'any', effect: 'RAGE', duration: 4.5, rarity: 'epic', animType: 'cast_delay', castTime: 0.2, color: '#f0abfc' },
+  WALL_BREAKERS: { name: 'Wall Breakers', cost: 2, hp: 330, dmg: 391, speed: 75, range: 15, attackSpeed: 0.1, icon: '🧨', type: 'ground', count: 2, color: '#ef4444', target: 'building', deployTime: 1, suicide: true, splash: true, splashRadius: 50, rarity: 'epic' },
+  CLONE: { name: 'Clone', cost: 3, icon: '👥', type: 'spell', radius: 90, rarity: 'epic', effect: 'CLONE', animType: 'cast_delay', castTime: 0.2, color: '#6ee7b7' },
+  GUARDS: { name: 'Guards', cost: 3, hp: 81, dmg: 117, speed: 50, range: 48, attackSpeed: 1.0, icon: '🔘', type: 'ground', count: 3, color: '#e5e7eb', target: 'ground', hasShield: true, maxShieldHp: 256, deployTime: 1, rarity: 'epic' },
+  SKARMY: { name: 'Skeleton Army',cost: 3,icon: '☠️',type: 'spell', radius: 60,target: 'ground',deployTime:1, rarity: 'epic',spawnUnits: ['SKELETONS', 'SKELETONS', 'SKELETONS', 'SKELETONS'],spawnUnitCounts: [4, 4, 4, 3],territoryRestricted: true, },
+  GOBLIN_BARREL: { name: 'Goblin Barrel', cost: 3, icon: '⚱️', type: 'spell', spawnUnit: 'GOBLINS', spawnCount: 3, radius: 40, target: 'ground', rarity: 'epic', animType: 'projectile_arc', speed: 300, projectileIcon: '⚱️' },
+  TORNADO: { name: 'Tornado', cost: 3, icon: '🌪️', type: 'spell', dmg: 81, radius: 165, target: 'ground', effect: 'KNOCKBACK', knockbackDistance: -80, rarity: 'epic', animType: 'cast_delay', castTime: 0.2, color: '#F8BBD0' },
+  BABY_DRAGON: { name: 'Baby Dragon', cost: 4, hp: 1152, dmg: 161, speed: 50, range: 105, attackSpeed: 1.5, icon: '🦖', type: 'air', count: 1, color: '#4ade80', target: 'any', deployTime: 1, splash: true, splashRadius: 60, rarity: 'epic' },
+  FREEZE: { name: 'Freeze', cost: 4, icon: '🥶', type: 'spell', dmg: 148, radius: 90, target: 'any', effect: 'FREEZE', duration: 4.0, rarity: 'epic', animType: 'cast_delay', castTime: 0.2, color: '#60a5fa' },
+  HUNTER: { name: 'Hunter', cost: 4, hp: 588, dmg: 80, speed: 40, range: 120, attackSpeed: 2.2, icon: '🔫', type: 'ground', count: 1, color: '#5cb85c', target: 'any', deployTime: 1, isHunter: true, pelletCount: 10, minRange: 20, rarity: 'epic' },
+  DARK_PRINCE: { name: 'Dark Prince', cost: 4, hp: 1440, dmg: 266, speed: 40, range: 36, attackSpeed: 1.3, icon: '💂🏿‍♂️', type: 'ground', count: 1, color: '#34495e', target: 'ground', deployTime: 1, splash: true, splashRadius: 60, hasShield: true, maxShieldHp: 400, charge: true, rarity: 'epic', canJumpRiver: true },
+  GOBLIN_DRILL: { name: 'Goblin Drill', cost: 4, icon: '♠️', type: 'spell', deployTime: 2, dmg: 84, radius: 70, target: 'ground',spawnUnits: ['DRILL', 'GOBLINS'],spawnUnitCounts: [1, 2], rarity: 'epic', animType: 'cast_delay', castTime: 1.0, color: '#16a34a'},
+  ELECTRO_DRAGON: { name: 'Electro Dragon', cost: 4, hp: 1152, dmg: 161, speed: 50, stunDuration: 0.5, range: 105, attackSpeed: 1.5, icon: '🐋', type: 'air', count: 1, color: '#4ade80', target: 'any', deployTime: 1, isEChainer: true, chainCount: 19, chainRange: 60, chainDmg: 99, chainStunDuration: 0.5, rarity: 'epic' },
+  POISON: { name: 'Poison', cost: 4, icon: '☠️', type: 'spell', dmg: 92, radius: 105, target: 'any', duration: 8.0, tickInterval: 1.0, isPersistent: true, rarity: 'epic', animType: 'cast_delay', castTime: 0.2, color: '#800080' },
+  BALLOON: { name: 'Balloon', cost: 5, hp: 1679, dmg: 640, speed: 40, range: 3, attackSpeed: 2.0, icon: '🎈', type: 'air', count: 1, color: '#991b1b', target: 'building', deployTime: 1, onDeathEffect: 'GIANT_BOMB', deathSpawnCount: 1, rarity: 'epic' },
+  BOWLER: { name: 'Bowler', cost: 5, hp: 1600, dmg: 240, speed: 40, range: 150, attackSpeed: 2.5, icon: '🧝🏻‍♀️', type: 'ground', count: 1, color: '#6a0dad', target: 'ground', deployTime: 1, rarity: 'epic', isBowler: true, projectileRange: 160, knockback: 20 },
+  CANNON_CART: { name: 'Cannon Cart', cost: 5, hp: 1809, dmg: 212, speed: 40, range: 165, attackSpeed: 0.9, icon: '🛒', type: 'ground', count: 1, color: '#7f1d1d', target: 'any', deployTime: 1, onDeathEffect: 'CANNON_BUILDING', baseSpeed: 50, baseAttackSpeed: 1.0, rarity: 'epic' },
+  EXECUTIONER: { name: 'Executioner', cost: 5, hp: 1280, dmg: 168, speed: 60, range: 135, attackSpeed: 2.4, icon: '🧑🏻‍⚖️', type: 'ground', count: 1, color: '#6a0dad', target: 'any', deployTime: 1, rarity: 'epic', isExecutioner: true, projectileRange: 220, radius: 40 },
+  PRINCE: { name: 'Prince', cost: 5, hp: 1920, dmg: 391, speed: 40, range: 48, attackSpeed: 1.4, icon: '🏇🏻', type: 'ground', count: 1, color: '#c084fc', target: 'ground', deployTime: 1, charge: true, baseSpeed: 40, rarity: 'epic', canJumpRiver: true },
+  WITCH: { name: 'Witch', cost: 5, hp: 839, dmg: 135, speed: 40, range: 160, attackSpeed: 1.1, icon: '🦹🏻‍♀️', type: 'ground', count: 1, color: '#7e22ce', target: 'any', deployTime: 1, splash: true, splashRadius: 30, spawnUnit: 'SKELETONS', spawnInterval: 6, spawnCount: 1, spawnTimer: 6, rarity: 'epic' },
+  GIANT_SKELETON: { name: 'Giant Skeleton', cost: 6, hp: 3617, dmg: 266, speed: 20, range: 24, attackSpeed: 1.4, icon: '🧑🏿‍🚀', type: 'ground', count: 1, color: '#909090', target: 'ground', deployTime: 2, onDeathEffect: 'GIANT_BOMB', deathSpawnCount: 1, rarity: 'epic' },
+  GOBLIN_GIANT: { name: 'Goblin Giant', cost: 6, hp: 3020, dmg: 176, speed: 20, range: 36, attackSpeed: 1.5, icon: '🧌', type: 'ground', count: 1, color: '#16a34a', target: 'building', deployTime: 1, rarity: 'epic', isGoblinGiant: true, backpackRange: 165, backpackDmg: 81, backpackAttackSpeed: 1.7, onDeathEffect: 'GOB', deathSpawnCount: 2 },
+  XBOW: { name: 'X-Bow', cost: 6, maxHp: 1600, dmg: 43, speed: 0, range: 345, attackSpeed: 0.3, icon: '⛏️', type: 'building', count: 1, color: '#e5e7eb', target: 'ground', deployTime: 3.5, duration: 30, hpDecayPerSecond: 53.3, rarity: 'epic' },
+  ELECTRO_GIANT: { name: 'Electro Giant', cost: 7, hp: 3855, dmg: 163, speed: 20, range: 36, attackSpeed: 2.1, icon: '🧑‍🔧', type: 'ground', count: 1, color: '#8888ee', target: 'building', deployTime: 3, isElectroGiant: true, electroRange: 80, stunDuration: 0.5, rarity: 'epic' },
+  PEKKA: { name: 'P.E.K.K.A', cost: 7, hp: 3760, dmg: 816, speed: 20, range: 36, attackSpeed: 1.8, icon: '🦾', type: 'ground', count: 1, color: '#312e81', target: 'ground', deployTime: 2, rarity: 'epic' },
+  GOLEM: { name: 'Golem', cost: 8, hp: 5120, dmg: 312, speed: 20, range: 22.5, attackSpeed: 2.5, icon: '🗿', type: 'ground', count: 1, color: '#9ca3af', target: 'building', deployTime: 3, onDeathEffect: 'GOLEMITE', deathSpawnCount: 2, rarity: 'epic' },
+  MIRROR: { name: 'Mirror', cost: '?', icon: '🪞', type: 'spell', rarity: 'epic' },
+
+  ROYAL_GHOST: { name: 'Royal Ghost', cost: 3, hp: 1000, dmg: 216, speed: 60, range: 20, attackSpeed: 1.8, icon: '👻', type: 'ground', count: 1, color: '#9CA3AF', target: 'ground', deployTime: 1, splash: true, splashRadius: 45, rarity: 'legendary', isRoyalGhost: true, invisibleDelay: 1.6 },
+  LOG: { name: 'The Log', cost: 2, icon: '🪵', type: 'spell', dmg: 268, radius: 100, target: 'ground', effect: 'KNOCKBACK', knockbackDistance: 70, rarity: 'legendary', territoryRestricted: true, isRolling: true, rectWidth: 100, range: 300, speed: 250 },
+  ICE_WIZARD: { name: 'Ice Wizard', cost: 3, hp: 688, dmg: 90, speed: 45, range: 165, attackSpeed: 1.7, icon: '❄️', type: 'ground', count: 1, color: '#38bdf8', target: 'any', deployTime: 1, rarity: 'legendary', isIceWizard: true, splash: true, splashRadius: 40, slowDuration: 2.5, },
+  MINER: { name: 'Miner', cost: 3, icon: '🥄', type: 'spell', deployTime: 1, target: 'ground', spawnUnit: 'MINOR', spawnCount: 1, rarity: 'legendary', animType: 'cast_delay', castTime: 1.0, color: '#a16207' },
+  ELECTRO_WIZARD: { name: 'Electro Wizard', cost: 4, icon: '⚡️', type: 'spell', dmg: 192, radius: 75, stunDuration: 0.5, target: 'any',spawnUnit: 'EWIZARD', spawnCount: 1, rarity: 'legendary', animType: 'cast_delay', castTime: 0.1, color: '#00ffff',territoryRestricted: true },
+  GRAVEYARD: { name: 'Graveyard', cost: 4, icon: '🪦', type: 'spell', radius: 120, target: 'any', effect: 'SPAWN', spawnUnit: 'SKELETONS', spawnInterval: 2.0, spawnCount: 1, duration: 10.0, maxSpawns: 10, isGraveyard: true, rarity: 'legendary', animType: 'cast_delay', castTime: 0.5, color: '#374151' },
+  MAGIC_ARCHER: { name: 'Magic Archer', cost: 4, hp: 529, dmg: 133, speed: 40, range: 210, attackSpeed: 1.1, icon: '🏌️‍♂️', type: 'ground', count: 1, color: '#2dd4bf', target: 'any', deployTime: 1, rarity: 'legendary', isMagicArcher: true, projectileRange: 330 },
+  NIGHT_WITCH: { name: 'Night Witch',cost: 4,icon: '🧛🏿‍♀️',type: 'spell',radius: 60,target: 'ground',deployTime:1,rarity: 'legendary',spawnUnits: ['NWITCH', 'BATS'],spawnUnitCounts: [1, 2],territoryRestricted: true},
+  INFERNO_DRAGON: { name: 'Inferno Dragon', cost: 4, hp: 1295, dmg: 35, speed: 40, range: 105, attackSpeed: 0.4, icon: '🐲', type: 'ground', count: 1, color: '#f97316', target: 'any', deployTime: 1, isInferno: true, dmgStage: 1, baseSpeed: 50, baseAttackSpeed: 0.4, rarity: 'legendary' },
+  MOTHER_WITCH: { name: 'Mother Witch', cost: 4, hp: 529, dmg: 133, speed: 40, range: 165, attackSpeed: 1.0, icon: '🧕🏻', type: 'ground', count: 1, color: '#ffc0cb', target: 'any', deployTime: 1, rarity: 'legendary', isMotherWitch: true },
+  SPARKY: { name: 'Sparky', cost: 6, hp: 1451, dmg: 1331, speed: 20, range: 150, attackSpeed: 4.0, icon: '🔦', type: 'ground', count: 1, color: '#f59e0b', target: 'any', deployTime: 1, splash: true, splashRadius: 70, stunDuration: 1.5, rarity: 'legendary' },
+  MK: { name: 'Mega Knight', cost: 7, icon: '🥷🏻', type: 'spell', deployTime: 2, dmg: 268, radius: 105, target: 'ground', spawnUnit: 'MEGA_KNIGHT', spawnCount: 1, rarity: 'legendary', territoryRestricted: true },
+  LAVA_HOUND: { name: 'Lava Hound', cost: 7, hp: 3581, dmg: 53, speed: 20, range: 105, attackSpeed: 1.3, icon: '🌋', type: 'air', count: 1, color: '#7f1d1d', target: 'building', deployTime: 1, onDeathEffect: 'LAVA_PUPS', deathSpawnCount: 6, rarity: 'legendary' },
+  PRINCESS: { name: 'Princess', cost: 3, hp: 261, dmg: 168, speed: 40, range: 270, attackSpeed: 3.0, icon: '👸', type: 'ground', count: 1, color: '#f7d73c', target: 'any', deployTime: 1, splash: true, splashRadius: 60, rarity: 'legendary' },
+  LUMBERJACK: { name: 'Lumberjack', cost: 4, hp: 1282, dmg: 256, speed: 70, range: 21, attackSpeed: 0.8, icon: '🍷', type: 'ground', count: 1, color: '#7e3009', target: 'ground', deployTime: 1, onDeathEffect: 'RAGE', baseSpeed: 70, baseAttackSpeed: 0.8, rarity: 'legendary' },
+  RAM_RIDER: { name: 'Ram Rider', cost: 5, hp: 1697, dmg: 250, speed: 40, range: 20, attackSpeed: 1.8, icon: '🐏', type: 'ground', count: 1, color: '#2e2e2e', target: 'building', deployTime: 1, rarity: 'legendary', charge: true, canJumpRiver: true, isRamRider: true, riderRange: 165, riderDmg: 104, riderSnareDuration: 2.0, riderAttackSpeed: 1.1, },
+  MEGA_KNIGHT: { name: 'Mega Knight', cost: 7, hp: 3993, dmg: 268, speed: 40, range: 36, attackSpeed: 1.7, icon: '🥷🏻', type: 'ground', count: 1, color: '#10b981', target: 'ground', deployTime: 2, splash: true, splashRadius: 70, jumpRange: 150, jumpDmg: 537, isMegaKnight: true, baseSpeed: 40, baseAttackSpeed: 1.8, rarity: 'legendary',selectable: false, },
+
+  // --- CHAMPIONS (UPDATED WITH COOLDOWNS) ---
+  ARCHER_QUEEN: { name: 'Archer Queen', cost: 5, hp: 1000, dmg: 225, speed: 40, range: 165, attackSpeed: 1.2, icon: '💅🏼', type: 'ground', count: 1, color: '#fcd34d', target: 'any', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 1, abilityType: 'CLOAK', abilityCooldown: 12 },
+  GOLDEN_KNIGHT: { name: 'Golden Knight', cost: 4, hp: 1800, dmg: 160, speed: 60, range: 20, attackSpeed: 0.9, icon: '👱🏻', type: 'ground', count: 1, color: '#fbbf24', target: 'ground', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 1, abilityType: 'DASH', abilityCooldown: 11 },
+  SKELETON_KING: { name: 'Skeleton King', cost: 4, hp: 2300, dmg: 180, speed: 40, range: 25, attackSpeed: 1.4, icon: '☠︎', type: 'ground', count: 1, color: '#4b5563', target: 'ground', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 2, abilityType: 'SOUL_SUMMON', splash: true, splashRadius: 50, abilityCooldown: 14 },
+  MIGHTY_MINER: { name: 'Mighty Miner', cost: 4, hp: 2100, dmg: 40, speed: 45, range: 25, attackSpeed: 0.4, icon: '🕰️', type: 'ground', count: 1, color: '#b91c1c', target: 'ground', deployTime: 1, rarity: 'champion',isInferno: true, dmgStage: 1, baseSpeed: 50, baseAttackSpeed: 0.4, isChampion: true, abilityCost: 2, abilityType: 'EXPLOSIVE_ESCAPE', isInferno: true, dmgStage: 1, abilityCooldown: 13 },
+  MONK: { name: 'Monk', cost: 5, hp: 2150, dmg: 140, speed: 40, range: 20, attackSpeed: 0.8, icon: '🙏', type: 'ground', count: 1, color: '#dbeafe', target: 'ground', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 1, abilityType: 'PRAYER', abilityCooldown: 17 },
+  LITTLE_PRINCE: { name: 'Little Prince', cost: 3, hp: 700, dmg: 110, speed: 40, range: 180, attackSpeed: 1.2, icon: '🤴', type: 'ground', count: 1, color: '#fde047', target: 'any', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 3, abilityType: 'ROYAL_RESCUE', abilityCooldown: 15 },
+
+  // --- AUXILIARY / HELPERS ---
+  CANNON_BUILDING: { name: 'Cannon', cost: 0, maxHp: 824, dmg: 212, speed: 0, range: 165, attackSpeed: 0.9, icon: '🔭', type: 'building', count: 1, color: '#7f1d1d', target: 'ground', duration: 15, deployTime: 0, hpDecayPerSecond: 33, selectable: false, rarity: 'auxiliary' },
+  GOBLIN_BRUISER: { name: 'Bruiser', cost: 0, hp: 1080, dmg: 337, speed: 50, range: 24, attackSpeed: 1.1, icon: '🏋🏼‍♂️', type: 'ground', count: 1, color: '#16a34a', target: 'ground', deployTime: 0, selectable: false, rarity: 'auxiliary' },
+  GOLEMITE: { name: 'Mini-Gólem', cost: 0, hp: 1039, dmg: 84, speed: 20, range: 7.5, attackSpeed: 2.5, icon: '🗿', type: 'ground', count: 1, color: '#9ca3af', target: 'building', deployTime: 0, selectable: false, rarity: 'auxiliary' },
+  LAVA_PUPS: { name: 'Lava Pup', cost: 0, hp: 217, dmg: 81, speed: 40, range: 48, attackSpeed: 1.7, icon: '🔥', type: 'air', count: 1, color: '#f97316', target: 'any', deployTime: 0, selectable: false, rarity: 'auxiliary' },
+  ROYAL_RECRUIT: { name: 'Royal Recruit', cost: 0, hp: 587, dmg: 133, speed: 40, range: 48, attackSpeed: 1.3, icon: '🛡️', type: 'ground', count: 1, color: '#a3a3a3', target: 'ground', deployTime: 0, selectable: false, hasShield: true, maxShieldHp: 240, rarity: 'auxiliary'  },
+  GOB: { name: 'Javelin Goblins', cost: 0, hp: 133, dmg: 81, speed: 70, range: 150, attackSpeed: 1.7, icon: '🖊', type: 'ground', count: 1, color: '#16a34a', target: 'any', deployTime: 1, selectable: false, rarity: 'auxiliary'  },
+  CURSED_HOG: { name: 'Cursed Hog', cost: 0, hp: 629, dmg: 53, speed: 70, range: 22.5, attackSpeed: 1.2, icon: '🐖', type: 'ground', count: 1, color: '#8b0000', target: 'building', deployTime: 0, selectable: false, rarity: 'auxiliary', canJumpRiver: true },
+  GIANT_BOMB: { name: 'Giant Bomb', cost: 0, hp: 1, maxHp: 1, dmg: 0, speed: 0, range: 0, attackSpeed: 0, icon: '💣', type: 'spell_effect', count: 1, color: '#333333', target: 'none', deployTime: 0.1, duration: 2.0, isUntargetable: true, splash: false, splashRadius: 0, rarity: 'auxiliary', selectable: false, onDeathEffect: 'BOOM' },
+  BOOM: { name: 'BOOM!', cost: 0, icon: '💥', type: 'spell', dmg: 535, radius: 90, target: 'any', rarity: 'auxiliary' , selectable: false },
+  BOY: { name: 'Boy', cost: 0, hp: 1940, dmg: 204, speed: 40, range: 24, attackSpeed: 1.5, icon: '🧝🏻‍♂️', type: 'ground', count: 1, color: '#fcd34d', target: 'ground', deployTime: 0.5, rarity: 'auxiliary', selectable: false },
+  GIRL: { name: 'Girl', cost: 0, hp: 261, dmg: 125, speed: 40, range: 150, attackSpeed: 1.0, icon: '🟢', type: 'ground', count: 2, color: '#f472b6', target: 'any', deployTime: 1, rarity: 'auxiliary', selectable: false },
+  EMUSKETEER: { name: 'Elite Musketeer', cost: 0, hp: 721, dmg: 217, speed: 40, range: 180, attackSpeed: 1.0, icon: '💂🏻‍♀️', type: 'ground', count: 1, color: '#a78bfa', target: 'any', deployTime: 1, rarity: 'auxiliary', selectable: false },
+  NWITCH: { name: 'Night Witch', cost: 4, hp: 906, dmg: 314, speed: 40, range: 36, attackSpeed: 1.3, icon: '🧛🏿‍♀️', type: 'ground', count: 1, color: '#7e22ce', target: 'ground', deployTime: 1,onDeathEffect: 'BATS', deathSpawnCount: 1, spawnUnit: 'BATS', spawnInterval: 5, spawnCount: 2, spawnTimer: 6, rarity: 'auxiliary', selectable: false  },
+  MINOR: { name: 'Miner', cost: 0, hp: 1210, dmg: 48, speed: 60, range: 40, attackSpeed: 1.3, icon: '🥄', type: 'ground', count: 1, color: '#fcd34d', target: 'any', deployTime: 1, rarity: 'auxiliary', selectable: false  },
+  DRILL: { name: 'Goblin Drill', cost: 0, maxHp: 1313, speed: 0, icon: '🌪️', type: 'building', count: 1, color: '#7f1d1d', deployTime: 1, spawnUnit: 'GOBLINS', spawnInterval: 3, duration: 10, hpDecayPerSecond: 131.2, spawnCount: 1, spawnTimer: 1,onDeathEffect: 'GOBLINS', deathSpawnCount: 2, rarity: 'auxiliary', selectable: false },
+  EWIZARD: { name: 'Electro Wizard', cost: 4, hp: 714, dmg: 115, speed: 50, range: 150, attackSpeed: 1.8, icon: '⚡', type: 'ground', count: 1, color: '#ffd700', target: 'any', deployTime: 1, stunDuration: 0.5, isEChainer: true, chainCount: 1, chainRange: 60, chainDmg: 115, chainStunDuration: 0.5, rarity: 'legendary', selectable: false },
+  ELIXIR_GOLEMITE: { name: 'Elixir Golemite', cost: 0, hp: 630, dmg: 105, speed: 45, range: 36, attackSpeed: 1.3, icon: '🟣', type: 'ground', count: 1, color: '#e879f9', target: 'building', deployTime: 0, rarity: 'auxiliary', selectable: false, onDeathEffect: 'ELIXIR_BLOB', deathSpawnCount: 2, giveElixirOnDeath: 0.5 },
+  ELIXIR_BLOB: { name: 'Elixir Blob', cost: 0, hp: 315, dmg: 52, speed: 60, range: 36, attackSpeed: 1.3, icon: '🔮', type: 'ground', count: 1, color: '#f0abfc', target: 'building', deployTime: 0, rarity: 'auxiliary', selectable: false, giveElixirOnDeath: 0.5 },
+  FROST_NOVA: { name: 'Frost Nova', cost: 0, hp: 1, maxHp: 1, dmg: 84, speed: 0, range: 0, attackSpeed: 0, icon: '❄️', type: 'spell_effect', count: 1, color: '#bae6fd', target: 'none', deployTime: 0, duration: 0.1, splash: true, splashRadius: 120, rarity: 'auxiliary', selectable: false, effect: 'SLOW_EXPLOSION', slowDuration: 3.0 },
+  MORTAR_SHELL: { name: 'Shell', cost: 0, type: 'spell', icon: '🔘', color: '#444', selectable: false, rarity: 'auxiliary', projectileIcon: '🔘' },
+  GOBUSH: { name: 'Bush Goblins', cost: 2, hp: 304, dmg: 256, speed: 40, range: 15, attackSpeed: 1.4, icon: '🪨', type: 'ground', count: 3, color: '#16a34a', target: 'ground', deployTime: 1,selectable: false, rarity: 'auxiliary'},
+  GUARDIAN: { name: 'Guardian', cost: 0, hp: 1800, dmg: 200, speed: 50, range: 30, attackSpeed: 1.1, icon: '🛡️', type: 'ground', count: 1, color: '#9ca3af', target: 'ground', deployTime: 0, rarity: 'auxiliary', selectable: false, onDeathEffect: null, isGuardian: true },
+};
+
+const TOWER_STATS = { PRINCESS: { hp: 3052, dmg: 109, range: 245, attackSpeed: 0.8 }, KING: { hp: 4824, dmg: 109, range: 230, attackSpeed: 1.0 } };
+
+const state = {
+  screen: 'menu', userDeck: [], units: [], projectiles: [], towers: [], particles: [],
+  playerElixir: 5, playerElixirTimer: 0, selectedCard: null, hoverX: null, hoverY: null, isHovering: false,
+  enemyElixir: 5, enemyElixirTimer: 0, enemyNextSpawn: 2, lastPlayedCard: null,
+  playerDeck: [], playerHand: [], enemyDeck: [], enemyHand: [], gameOver: false, winner: null,
+  canvas: null, ctx: null, scale: 1, rect: null, lastTime: 0, activeChampionId: null,
+  gameMode: 'training', enemyName: 'TRAINER',
+};
+
+function init() {
+  state.canvas = document.getElementById('gameCanvas');
+  state.ctx = state.canvas.getContext('2d');
+  resize();
+  window.addEventListener('resize', resize);
+  state.canvas.addEventListener('mouseup', handleDeployment);
+  state.canvas.addEventListener('touchend', (e) => handleDeployment(e.changedTouches[0]), {passive: false});
+  state.canvas.addEventListener('mousemove', handleInputMove);
+  state.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleInputMove(e.changedTouches[0]); }, {passive: false});
+  state.canvas.addEventListener('mouseleave', () => { state.isHovering = false; });
+  initDeckBuilder();
+  initMenu();
+  fetchLeaderboard();
+  requestAnimationFrame(loop);
+}
+
+function resize() {
+  const container = document.getElementById('game-container');
+  const targetRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
+  const containerW = container.clientWidth;
+  const containerH = container.clientHeight;
+  const containerRatio = containerW / containerH;
+  let finalW, finalH;
+  if (containerRatio > targetRatio) { finalH = containerH; finalW = finalH * targetRatio; } else { finalW = containerW; finalH = finalW / targetRatio; }
+  state.canvas.width = finalW; state.canvas.height = finalH;
+  state.scale = finalW / CANVAS_WIDTH;
+  state.rect = state.canvas.getBoundingClientRect();
+}
+
+function initDeckBuilder() {
+  const slotsDiv = document.getElementById('my-deck-slots');
+  slotsDiv.innerHTML = '';
+  for(let i=0; i<8; i++) {
+      const d = document.createElement('div'); d.className = 'deck-slot'; d.id = `slot-${i}`; d.onclick = () => removeCardFromDeck(i); d.textContent = '+'; slotsDiv.appendChild(d);
+  }
+  const collectionDiv = document.getElementById('card-collection');
+  collectionDiv.innerHTML = '';
+  const allKeys = Object.keys(UNIT_TYPES);
+  const rarityOrder = ['common', 'rare', 'epic', 'legendary', 'champion', 'spell', 'auxiliary'];
+  allKeys.sort((a, b) => {
+      const uA = UNIT_TYPES[a]; const uB = UNIT_TYPES[b];
+      const rA = rarityOrder.indexOf(uA.rarity || uA.type); const rB = rarityOrder.indexOf(uB.rarity || uB.type);
+      if (rA !== rB) return rA - rB; return uA.cost - uB.cost;
+  });
+  allKeys.forEach(key => {
+      const u = UNIT_TYPES[key]; if (u.selectable === false) return;
+      const el = document.createElement('div'); el.className = 'collection-card'; el.dataset.key = key; el.onclick = () => toggleCardInDeck(key);
+      const rarityColor = RARITY_COLORS[u.rarity] || '#555';
+      el.style.borderColor = rarityColor; el.style.background = `radial-gradient(circle at top left, ${rarityColor}60, transparent 80%)`;
+      el.innerHTML = `<div class="cost">${u.cost}</div><div style="font-size: 24px;">${u.icon}</div><div style="font-size: 10px; font-weight: bold; text-align: center;">${u.name}</div>`;
+      collectionDiv.appendChild(el);
+  });
+  const defaults = allKeys.filter(k => UNIT_TYPES[k].type !== 'spell' && UNIT_TYPES[k].selectable !== false && UNIT_TYPES[k].rarity !== 'champion').slice(0, 8);
+  defaults.forEach(k => toggleCardInDeck(k));
+}
+window.toggleCardInDeck = (key) => {
+    const u = UNIT_TYPES[key];
+    const hasChampion = state.userDeck.some(k => UNIT_TYPES[k].rarity === 'champion');
+
+    // Si intenta añadir un campeón y ya tiene uno (y la carta que toca no es la que ya tiene para quitarla)
+    if (u.rarity === 'champion' && hasChampion && !state.userDeck.includes(key)) {
+        alert("¡Solo puedes tener un Campeón en tu mazo!");
+        return;
+    }
+
+    const idx = state.userDeck.indexOf(key);
+    if (idx !== -1) state.userDeck.splice(idx, 1);
+    else if (state.userDeck.length < 8) state.userDeck.push(key);
+
+    renderDeckBuilder();
+}
+window.removeCardFromDeck = (index) => { if (index < state.userDeck.length) { state.userDeck.splice(index, 1); renderDeckBuilder(); } }
+window.generateRandomDeck = () => {
+  state.userDeck = []; const all = Object.keys(UNIT_TYPES).filter(key => UNIT_TYPES[key].selectable !== false); const shuffled = [...all].sort(() => Math.random() - 0.5);
+  for (let i = 0; i < 8; i++) { if (shuffled.length > 0) state.userDeck.push(shuffled.shift()); else break; } renderDeckBuilder();
+}
+function renderDeckBuilder() {
+  for(let i=0; i<8; i++) {
+      const slot = document.getElementById(`slot-${i}`);
+      if (i < state.userDeck.length) {
+          const key = state.userDeck[i]; const u = UNIT_TYPES[key]; slot.className = 'deck-slot filled'; slot.textContent = u.icon;
+          const rarityColor = RARITY_COLORS[u.rarity] || '#fff'; slot.style.borderColor = rarityColor; slot.style.background = `radial-gradient(circle at top left, ${rarityColor}80, transparent 70%)`;
+      } else { slot.className = 'deck-slot'; slot.textContent = '+'; slot.style.borderColor = '#555'; slot.style.background = '#333'; }
+  }
+  document.querySelectorAll('.collection-card').forEach(el => {
+      const key = el.dataset.key; const u = UNIT_TYPES[key]; const rarityColor = RARITY_COLORS[u.rarity] || '#555';
+      el.style.borderColor = rarityColor; el.style.background = `radial-gradient(circle at top left, ${rarityColor}60, transparent 80%)`;
+      if (state.userDeck.includes(el.dataset.key)) { el.classList.add('selected'); el.style.borderColor = '#4ade80'; el.style.background = '#14532d'; } else { el.classList.remove('selected'); }
+  });
+  document.getElementById('deck-count').textContent = `(${state.userDeck.length}/8)`;
+  const btn = document.getElementById('battle-btn-main');
+  if(state.userDeck.length !== 8) { btn.disabled = true; btn.textContent = "FILL DECK"; } else { btn.disabled = false; btn.textContent = "BATTLE"; }
+  if (loggedPlayer && state.userDeck.length === 8) {
+        // Guardamos el mazo automáticamente cuando está completo
+        window.saveGameToCloud(null); // Usamos null o 0 para indicar que no es resultado de partida, solo guardar mazo
+    }
+}
+function startGame() {
+    if (state.userDeck.length !== 8) return;
+    window.showLoading(() => {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('bottom-nav').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        document.getElementById('auth-ui').style.display = 'none';
+
+        // CAMBIO: Si hay jugador logueado pone su nombre, si no "YOU"
+        const playerName = loggedPlayer ? loggedPlayer.username.toUpperCase() : "YOU";
+        document.getElementById('player-name-ui').textContent = playerName;
+        document.querySelector('#header .red').textContent = state.enemyName;
+
+        state.screen = 'game';
+        setTimeout(resize, 50);
+        setupGameMatch();
+        updateHandUI();
+    });
+}
+function createTower(team, type, x, y, isKing = false) {
+  const stats = isKing ? TOWER_STATS.KING : TOWER_STATS.PRINCESS; const size = isKing ? 120 : 90; const hitR = isKing ? 50 : 30;
+  return { id: Math.random(), team, type, x, y, hp: stats.hp, maxHp: stats.hp, range: stats.range, damage: stats.dmg, attackSpeed: stats.attackSpeed, cooldown: 0, width: size, height: size, hitRadius: hitR, active: !isKing, lockedTargetId: null };
+}
+function setupGameMatch() {
+  state.units = []; state.projectiles = []; state.towers = []; state.particles = []; state.gameOver = false; state.playerElixir = 6; state.enemyElixir = 6; state.lastPlayedCard = null;
+  state.playerDeck = [...state.userDeck].sort(() => Math.random() - 0.5);
+  state.playerHand = state.playerDeck.splice(0, 4);
+  const allAI = Object.keys(UNIT_TYPES).filter(key => UNIT_TYPES[key].selectable !== false); const shuffledAI = [...allAI].sort(() => Math.random() - 0.5);
+  state.enemyDeck = shuffledAI.slice(0, 8); state.enemyHand = state.enemyDeck.splice(0, 4);
+  state.towers.push(createTower('player', 'princess', 105, 764.7)); state.towers.push(createTower('player', 'princess', 434.6, 764.7)); state.towers.push(createTower('player', 'king', 270, 870, true));
+  state.towers.push(createTower('enemy', 'princess', 105, 195.9)); state.towers.push(createTower('enemy', 'princess', 435, 195.9)); state.towers.push(createTower('enemy', 'king', 270, 90, true));
+  state.towers.find(t => t.team === 'player' && t.type === 'king').active = false; state.towers.find(t => t.team === 'enemy' && t.type === 'king').active = false;
+  state.activeChampionId = null;
+}
+function updateHandUI() {
+  const deckEl = document.getElementById('deck'); deckEl.innerHTML = '';
+  state.playerHand.forEach((key, index) => {
+      let u = UNIT_TYPES[key]; let displayCost = u.cost; let displayIcon = u.icon; let displayName = u.name; let displayRarity = u.rarity;
+      if (key === 'MIRROR') { if (state.lastPlayedCard) { const last = UNIT_TYPES[state.lastPlayedCard]; displayCost = last.cost + 1; displayIcon = last.icon; displayName = "Mirror " + last.name; displayRarity = 'epic'; } else { displayCost = '?'; } }
+      const el = document.createElement('div'); el.className = 'card'; el.onclick = () => selectCard(key, index);
+      const rarityColor = RARITY_COLORS[displayRarity] || '#555'; el.style.borderColor = rarityColor; el.style.background = `radial-gradient(circle at top left, ${rarityColor}60, transparent 80%)`;
+      if (state.selectedCard === key) { el.classList.add('active'); el.style.borderColor = '#fff'; el.style.boxShadow = `0 0 10px ${rarityColor}80`; }
+      el.innerHTML = `<div class="card-cost">${displayCost}</div><div style="font-size: 24px;">${displayIcon}</div><div style="font-size: 10px; font-weight: bold; text-align: center;">${displayName}</div>`;
+      deckEl.appendChild(el);
+  });
+}
+let selectedHandIndex = -1;
+function selectCard(key, index) {
+  if (state.gameOver) return;
+  if (state.selectedCard === key && selectedHandIndex === index) { state.selectedCard = null; selectedHandIndex = -1; }
+  else {
+      let effectiveCost = UNIT_TYPES[key].cost; if (key === 'MIRROR') { if (!state.lastPlayedCard) return; effectiveCost = UNIT_TYPES[state.lastPlayedCard].cost + 1; }
+      if (state.playerElixir >= effectiveCost) { state.selectedCard = key; selectedHandIndex = index; }
+  } updateHandUI();
+}
+function loop(timestamp) {
+  if (!state.lastTime) state.lastTime = timestamp; const dt = (timestamp - state.lastTime) / 1000; state.lastTime = timestamp;
+  if (state.screen === 'game') {
+      if (!state.gameOver) { updateElixir(dt); updateAI(dt); updateEntities(dt); checkWinCondition(); }
+      render(); updateUI();
+  } requestAnimationFrame(loop);
+}
+function updateElixir(dt) {
+  state.playerElixirTimer += dt; if (state.playerElixirTimer >= ELIXIR_RATE && state.playerElixir < 10) { state.playerElixir = Math.min(10, state.playerElixir + 1); state.playerElixirTimer = 0; }
+  state.enemyElixirTimer += dt; if (state.enemyElixirTimer >= ELIXIR_RATE && state.enemyElixir < 10) { state.enemyElixir = Math.min(10, state.enemyElixir + 1); state.enemyElixirTimer = 0; }
+}
+function handleInputMove(e) {
+    if (state.screen !== 'game' || !state.selectedCard) { state.isHovering = false; return; }
+    const rect = state.canvas.getBoundingClientRect();
+    const rawX = (e.clientX - rect.left) / state.scale; const rawY = (e.clientY - rect.top) / state.scale;
+    state.hoverX = Math.floor(rawX / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; state.hoverY = Math.floor(rawY / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; state.isHovering = true;
+}
+
+// --- DEPLOYMENT LOGIC ---
+function handleDeployment(e) {
+  if (state.screen !== 'game' || !state.selectedCard || state.gameOver) return;
+  let clickX, clickY;
+  const rect = state.canvas.getBoundingClientRect(); 
+  const rawX = (e.clientX - rect.left) / state.scale; 
+  const rawY = (e.clientY - rect.top) / state.scale;
+  clickX = Math.floor(rawX / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; 
+  clickY = Math.floor(rawY / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2;
+
+  state.isHovering = false; 
+  let unitKey = state.selectedCard; 
+  let cardData = UNIT_TYPES[unitKey]; 
+  let effectiveCost = cardData.cost;
+  if (unitKey === 'MIRROR') { if (!state.lastPlayedCard) return; unitKey = state.lastPlayedCard; cardData = UNIT_TYPES[unitKey]; effectiveCost = cardData.cost + 1; }
+  
+  if (state.playerElixir < effectiveCost) return;
+
+  const riverTop = CANVAS_HEIGHT / 2 - 32; 
+  const riverBot = CANVAS_HEIGHT / 2 + 32;
+  if (cardData.type !== 'spell' && clickY > riverTop && clickY < riverBot) return;
+
+  const getDeployY = (x, team) => { 
+      const riverY = CANVAS_HEIGHT / 1.9; 
+      const pocketY = 320; 
+      const centerX = CANVAS_WIDTH / 2; 
+      const eLeft = state.towers.find(t => t.team === 'enemy' && t.type === 'princess' && t.x < centerX); 
+      const eRight = state.towers.find(t => t.team === 'enemy' && t.type === 'princess' && t.x > centerX); 
+      let limitY = riverY; if (!eLeft && x < centerX) limitY = pocketY; if (!eRight && x > centerX) limitY = pocketY; 
+      return limitY; 
+  };
+
+  if (cardData.type === 'spell') { spawnSpell(unitKey, 'player', clickX, clickY); } 
+  else { 
+      const validMinY = getDeployY(clickX, 'player'); 
+      if (clickY < validMinY && !(cardData.isLineDeployment && state.towers.filter(t => t.team === 'enemy' && t.type === 'princess').length === 0)) return;
+      spawnUnit(unitKey, 'player', clickX, clickY); 
+  }
+
+  // AHORA SOLO RESTA ELIXIR UNA VEZ
+  state.playerElixir -= effectiveCost;
+  state.lastPlayedCard = unitKey;
+
+  if (isPvP && pvpChannel) { 
+      pvpChannel.send({ type: 'broadcast', event: 'card_played', payload: { key: unitKey, x: CANVAS_WIDTH - clickX, y: CANVAS_HEIGHT - clickY } }); 
+  }
+
+  if (selectedHandIndex !== -1) { 
+      state.playerDeck.push(state.selectedCard); 
+      state.playerHand[selectedHandIndex] = state.playerDeck.length > 0 ? state.playerDeck.shift() : null; 
+  }
+  state.selectedCard = null; 
+  selectedHandIndex = -1; 
+  updateHandUI();
+}
+function spawnUnit(key, team, x, y, immediateDeploy = false, unitCountOverride = null) {
+  const proto = UNIT_TYPES[key]; const offset = 20; const actualCount = unitCountOverride !== null ? unitCountOverride : proto.count;
+  for(let i=0; i<actualCount; i++) {
+      let finalX, finalY;
+
+      // --- ROYAL RECRUIT SPLIT LOGIC ---
+      if (proto.isLineDeployment && actualCount === 6) {
+          let pattern = '3-3';
+          if (x < CANVAS_WIDTH * 0.35) pattern = '4-2';
+          else if (x > CANVAS_WIDTH * 0.65) pattern = '2-4';
+          let pcts = [];
+          if (pattern === '3-3') { pcts = [1/12, 3/12, 5/12, 7/12, 9/12, 11/12]; } else if (pattern === '4-2') { pcts = [0.08, 0.20, 0.32, 0.44,   0.75, 0.88]; } else { pcts = [0.12, 0.25,   0.56, 0.68, 0.80, 0.92]; }
+          finalX = pcts[i] * CANVAS_WIDTH; finalY = y;
+      }
+      else {
+          finalX = actualCount > 1 ? x + (i * offset) - (offset * (actualCount-1)/2) : x;
+          finalY = actualCount > 1 ? y + (Math.random()*20 - 10) : y;
+      }
+
+      const unit = {
+          id: Math.random(), key: key, team: team, x: finalX, y: finalY,
+          hp: proto.hp || proto.maxHp, maxHp: proto.maxHp || proto.hp,
+          dmg: proto.dmg, range: proto.range, speed: proto.speed, attackSpeed: proto.attackSpeed,
+          cooldown: immediateDeploy ? 0 : proto.deployTime, state: immediateDeploy ? 'moving' : 'deploying',
+          type: proto.type, targetType: proto.target, target: null, icon: proto.icon, color: proto.color, radius: 15,
+          baseSpeed: proto.speed, baseAttackSpeed: proto.attackSpeed, splash: proto.splash, splashRadius: proto.splashRadius,
+          spawnUnit: proto.spawnUnit, spawnInterval: proto.spawnInterval, spawnCount: proto.spawnCount, spawnTimer: proto.spawnInterval,
+          charge: proto.charge, charging: false, chargeTimer: 0, suicide: proto.suicide, healAmount: proto.healAmount, healRadius: proto.healRadius, healOnHit: proto.healOnHit,
+          onDeathEffect: proto.onDeathEffect, isHunter: proto.isHunter, pelletCount: proto.pelletCount, minRange: proto.minRange,
+          isRaged: false, rageTimer: 0, isFrozen: false, freezeTimer: 0, stunDuration: proto.stunDuration,
+          isSlowed: false, slowTimer: 0,
+          isSnared: false, snareTimer: 0,
+          isRamRider: proto.isRamRider, riderCooldown: 0, riderRange: proto.riderRange, riderDmg: proto.riderDmg, riderSnareDuration: proto.riderSnareDuration, riderAttackSpeed: proto.riderAttackSpeed,
+          isMegaKnight: proto.isMegaKnight, jumpRange: proto.jumpRange, jumpDmg: proto.jumpDmg, jumpTargetX: null, jumpTargetY: null,
+          isInferno: proto.isInferno, dmgStage: 1, lastTargetId: null, isGraveyard: proto.isGraveyard, duration: proto.duration, hpDecayPerSecond: proto.hpDecayPerSecond, durationTimer: proto.duration,
+          hasShield: proto.hasShield, maxShieldHp: proto.maxShieldHp, shieldHp: proto.hasShield ? proto.maxShieldHp : 0, deathSpawnCount: proto.deathSpawnCount, isElectroGiant: proto.isElectroGiant, electroRange: proto.electroRange,
+          hideOnIdle: proto.hideOnIdle, isHidden: proto.hideOnIdle, onDeployShock: proto.onDeployShock, isPersistentSpell: proto.isPersistent, tickInterval: proto.tickInterval, tickTimer: proto.tickInterval, buildingMultiplier: proto.buildingMultiplier,
+          burrowDeploy: proto.burrowDeploy, isMotherWitch: proto.isMotherWitch, isUntargetable: proto.isUntargetable, isEChainer: proto.isEChainer, chainCount: proto.chainCount, chainRange: proto.chainRange, chainDmg: proto.chainDmg, chainStunDuration: proto.chainStunDuration,
+          produceElixir: proto.produceElixir, productionInterval: proto.productionInterval, productionAmount: proto.productionAmount, productionTimer: proto.productionInterval, giveElixirOnDeath: proto.giveElixirOnDeath,
+          isExecutioner: proto.isExecutioner, isFirecracker: proto.isFirecracker, recoilDistance: proto.recoilDistance, lockedTargetId: null, canJumpRiver: proto.canJumpRiver,
+          isGoblinGiant: proto.isGoblinGiant, backpackRange: proto.backpackRange, backpackDmg: proto.backpackDmg, backpackAttackSpeed: proto.backpackAttackSpeed, backpackCooldown: 0,
+          isIceWizard: proto.isIceWizard, isMagicArcher: proto.isMagicArcher, isBowler: proto.isBowler,
+
+          // --- STEALTH PROPERTIES ---
+          isRoyalGhost: proto.isRoyalGhost,
+          isInvisible: proto.isRoyalGhost || proto.hideOnIdle,
+          invisibleDelay: proto.invisibleDelay || 0,
+          invisibleTimer: 0,
+          isBush: proto.isBush,
+
+          // --- CHAMPION PROPERTIES ---
+          isChampion: proto.isChampion,
+          abilityType: proto.abilityType,
+          abilityCost: proto.abilityCost,
+          abilityCooldown: proto.abilityCooldown || 10,
+          abilityTimer: 0, // Current cooldown state
+          isChanneling: false, // For Monk and Prince
+          channelTimer: 0, // For Prince
+          isReflecting: false, // For Monk
+          isClone: false,
+
+          // --- GUARDIAN PROPS ---
+          isGuardian: proto.isGuardian,
+          isGuardianCharging: false,
+          chargeDuration: 0
+      };
+      if (proto.type === 'building') { unit.isBuilding = true; unit.width = 50; unit.height = 50; }
+
+      // --- CHAMPION REGISTRATION LOGIC ---
+      if (unit.isChampion && team === 'player') {
+          // If a new champion is spawned (even via Mirror), it becomes the ACTIVE champion
+          state.activeChampionId = unit.id;
+      }
+
+      // --- MONK 3-HIT COMBO INIT ---
+      if (key === 'MONK') {
+          unit.comboCount = 0;
+          unit.comboTargetId = null;
+      }
+
+      state.units.push(unit);
+      if (unit.onDeployShock) { doSplashDamage(unit.x, unit.y, unit.splashRadius||40, unit.dmg, unit.team, unit.stunDuration||0.5); spawnHitEffect(unit.x, unit.y, '#ffd700', 10, 5); }
+  }
+}
+function triggerSpellEffect(key, team, x, y) {
+    const proto = UNIT_TYPES[key]; spawnHitEffect(x, y, proto.color || '#fff', 20);
+    if (proto.dmg && !proto.isPersistent) doSplashDamage(x, y, proto.radius || proto.splashRadius, proto.dmg, team, proto.stunDuration || 0);
+    if (proto.effect === 'FREEZE') applyFreezeEffect(x, y, proto.radius, proto.duration, team);
+    if (proto.effect === 'KNOCKBACK') applyKnockback(x, y, proto.radius, proto.knockbackDistance, team);
+    if (proto.effect === 'RAGE') applyRageEffect(x, y, team, proto.radius, proto.duration);
+    if (proto.effect === 'SNOWBALL') { applyKnockback(x, y, proto.radius, proto.knockbackDistance, team); applySlowEffect(x, y, proto.radius, proto.slowDuration, team); } // SNOWBALL
+    if (proto.effect === 'SLOW_EXPLOSION') { applySlowEffect(x, y, proto.splashRadius, proto.slowDuration, team); } // ICE GOLEM DEATH
+
+    // --- CLONE LOGIC ---
+    if (proto.effect === 'CLONE') {
+        const targets = state.units.filter(u => u.team === team && !u.isBuilding && !u.isClone && !u.isPersistentSpell && !u.isUntargetable && u.hp > 0 && getDistance({x:x, y:y}, u) <= proto.radius);
+        targets.forEach(original => {
+             spawnUnit(original.key, team, original.x + 20, original.y, true, 1);
+             const clone = state.units[state.units.length - 1];
+             clone.hp = 1; clone.maxHp = 1; clone.isClone = true;
+             if (clone.hasShield) { clone.shieldHp = 1; clone.maxShieldHp = 1; }
+             clone.lockedTargetId = null; clone.charging = false; clone.chargeTimer = 0;
+             if (clone.x > CANVAS_WIDTH - 10) clone.x = original.x - 20;
+             spawnHitEffect(clone.x, clone.y, '#6ee7b7', 5);
+        });
+    }
+
+    if (proto.effect === 'SPAWN' && proto.isGraveyard) {
+        const gy = { id: Math.random(), key: key, team: team, x: x, y: y, hp: 1, maxHp: 1, type: 'building', state: 'active', icon: proto.icon, color: '#030712', radius: proto.radius, isGraveyard: true, spawnUnit: proto.spawnUnit, spawnInterval: proto.spawnInterval, spawnCount: proto.spawnCount, spawnTimer: 0, durationTimer: proto.duration, spawnsLeft: proto.maxSpawns, particleTimer: 0.1 };
+        state.units.push(gy); for(let i=0; i<15; i++) state.particles.push({x: x+(Math.random()*proto.radius-proto.radius/2), y: y+(Math.random()*proto.radius-proto.radius/2), vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 1.0, color: '#374151'});
+    }
+    if (proto.isPersistent) {
+        const persistentSpell = { id: Math.random(), key: key, team: team, x: x, y: y, hp: 1, maxHp: 1, type: 'spell_area', state: 'active', icon: proto.icon, color: proto.color || '#333', radius: proto.radius, isPersistentSpell: true, durationTimer: proto.duration, tickInterval: proto.tickInterval, tickTimer: proto.tickInterval, dmg: proto.dmg || 0, targetType: proto.target, buildingMultiplier: proto.buildingMultiplier || 1, earthquakeUnitDmg: proto.earthquakeUnitDmg, earthquakeBuildingDmg: proto.earthquakeBuildingDmg, earthquakeTowerDmg: proto.earthquakeTowerDmg, onDeathSpawnUnit: proto.onDeathSpawnUnit, onDeathSpawnCount: proto.onDeathSpawnCount };
+        state.units.push(persistentSpell);
+    }
+    if ((proto.spawnUnit || proto.spawnUnits) && !proto.isGraveyard && !proto.isRolling && proto.effect !== 'CLONE') {
+        const unitsToSpawn = proto.spawnUnits || [proto.spawnUnit]; const countsToSpawn = proto.spawnUnitCounts || [proto.spawnCount];
+        unitsToSpawn.forEach((spawnKey, index) => { const count = countsToSpawn[index]; if (count > 0) { const offset = 20; for(let i=0; i<count; i++) spawnUnit(spawnKey, team, x + (i * offset) - (offset * (count-1)/2), y + (Math.random()*20 - 10), true, 1); } });
+    }
+}
+function spawnSpell(key, team, x, y) {
+  const proto = UNIT_TYPES[key];
+  if (proto.isRolling) {
+       const dir = team === 'player' ? -1 : 1;
+       state.projectiles.push({ type: 'rolling', key: key, team: team, x: x, y: y, vx: 0, vy: dir * proto.speed, width: proto.rectWidth, height: 30, range: proto.range, distTraveled: 0, hitIds: [], dmg: proto.dmg, knockback: proto.knockbackDistance || 0, spawnUnit: proto.spawnUnit, rotation: 0 }); return;
+  }
+  if (proto.animType === 'projectile_arc') {
+      const startX = CANVAS_WIDTH / 2; const startY = team === 'player' ? CANVAS_HEIGHT - 90 : 90; const dist = Math.hypot(x - startX, y - startY);
+      state.projectiles.push({ type: 'spell_arc', key: key, team: team, startX: startX, startY: startY, targetX: x, targetY: y, progress: 0, duration: dist / (proto.speed || 500), height: 200, onHit: () => triggerSpellEffect(key, team, x, y) }); return;
+  }
+  if (proto.animType === 'projectile_volley') {
+      const duration = 0.6;
+      for(let i=0; i<10; i++) { const offsetX = (Math.random() - 0.5) * proto.radius; const offsetY = (Math.random() - 0.5) * proto.radius; state.projectiles.push({ type: 'spell_arrow', key: key, team: team, startX: x + offsetX - 50, startY: y + offsetY - 300 * (team==='player'?1:-1), targetX: x + offsetX, targetY: y + offsetY, progress: 0, duration: duration + Math.random() * 0.2 }); }
+      state.projectiles.push({ type: 'spell_timer', key: key, team: team, x: x, y: y, timer: duration + 0.2, onHit: () => triggerSpellEffect(key, team, x, y) }); return;
+  }
+  if (proto.animType === 'cast_delay') { state.projectiles.push({ type: 'spell_delay_vis', key: key, team: team, x: x, y: y, timer: proto.castTime || 0.5, maxTimer: proto.castTime || 0.5, color: proto.color || '#fff', radius: proto.radius, onHit: () => triggerSpellEffect(key, team, x, y) }); return; }
+  triggerSpellEffect(key, team, x, y);
+}
+
+// --- CHAMPION ABILITY LOGIC (UPDATED WITH COOLDOWNS & MONK FIXES & LITTLE PRINCE) ---
+window.activateChampionAbility = () => {
+    if (!state.activeChampionId) return;
+
+    const champ = state.units.find(u => u.id === state.activeChampionId);
+    if (!champ || champ.hp <= 0) {
+        state.activeChampionId = null;
+        updateUI();
+        return;
+    }
+
+    if (champ.abilityTimer > 0) return; // Cooldown Check
+    if (state.playerElixir < champ.abilityCost) return; // Cost Check
+
+    state.playerElixir -= champ.abilityCost;
+    champ.isAbilityActive = true; // Mark as active for duration tracking
+
+    switch (champ.abilityType) {
+        case 'CLOAK': // Archer Queen
+            champ.isInvisible = true; champ.invisibleTimer = 3.0;
+            champ.isRaged = true; champ.rageTimer = 3.0;
+            spawnHitEffect(champ.x, champ.y, '#d946ef', 10);
+            // Cooldown starts after invis ends
+            break;
+
+        case 'DASH': // Golden Knight
+            champ.isUntargetable = true; chainDashAttack(champ, 8, 140);
+            // Cooldown starts after dash ends
+            break;
+
+        case 'SOUL_SUMMON': // Skeleton King (Instant)
+            spawnUnit('SKARMY', champ.team, champ.x, champ.y, true);
+            spawnHitEffect(champ.x, champ.y, '#6b7280', 10);
+            champ.abilityTimer = champ.abilityCooldown; // Instant start
+            champ.isAbilityActive = false;
+            break;
+
+        case 'EXPLOSIVE_ESCAPE': // Mighty Miner (Instant)
+            spawnUnit('GIANT_BOMB', champ.team, champ.x, champ.y, true);
+            champ.x = CANVAS_WIDTH - champ.x; // Teleport
+            champ.isInferno = false; champ.dmgStage = 1;
+            spawnHitEffect(champ.x, champ.y, '#b91c1c', 10);
+            champ.abilityTimer = champ.abilityCooldown; // Instant start
+            champ.isAbilityActive = false;
+            break;
+
+        case 'PRAYER': // Monk (Duration)
+            champ.isReflecting = true;
+            champ.isChanneling = true; // Prevents movement/attacks
+            champ.reflectionTimer = 4.0;
+            champ.hasShield = true; champ.shieldHp = 1; champ.maxShieldHp = 1; // Visual Shield
+            champ.speed = 0; // Immediate stop
+            spawnHitEffect(champ.x, champ.y, '#fff', 10);
+            // Cooldown starts after reflection ends
+            break;
+
+        case 'ROYAL_RESCUE': // Little Prince
+            // 1. Make Little Prince stop and wait (Channeling)
+            champ.isChanneling = true;
+            champ.channelTimer = 0.6; // Stays still for 1 second
+
+            // 2. Calculate Spawn Position (Behind the Prince)
+            // If player (attacking UP), behind is Y + offset. If enemy, behind is Y - offset.
+            const spawnOffset = champ.team === 'player' ? 30 : -30;
+            const spawnY = champ.y + spawnOffset;
+
+            // 3. Spawn the Guardian
+            spawnUnit('GUARDIAN', champ.team, champ.x, spawnY, true);
+
+            // 4. Configure the Guardian's "Log Charge" state
+            const guardian = state.units[state.units.length - 1]; // Get the unit just spawned
+            guardian.isGuardianCharging = true;
+            guardian.chargeDuration = 0.4; // Duration of the dash
+            guardian.chargeSpeed = 250;    // Speed of the dash (like The Log)
+            guardian.chargeDir = champ.team === 'player' ? -1 : 1; // Direction multiplier
+            guardian.hitIds = [];          // Track who we pushed so we don't push twice
+            guardian.isUntargetable = true;// Invincible during dash
+
+            // Visual Effect
+            spawnHitEffect(champ.x, champ.y, '#fcd34d', 15);
+
+            // Cooldown starts immediately
+            champ.abilityTimer = champ.abilityCooldown;
+            champ.isAbilityActive = false;
+            break;
+    }
+    updateUI();
+}
+
+function chainDashAttack(unit, dashesLeft, range) {
+    if (dashesLeft <= 0) {
+        unit.isUntargetable = false;
+        unit.state = 'moving';
+        // Dash chain ended, start cooldown
+        unit.abilityTimer = unit.abilityCooldown;
+        unit.isAbilityActive = false;
+        return;
+    }
+
+    // Find nearest target excluding current position and team
+    const targets = state.units.filter(e =>
+        e.team !== unit.team &&
+        !e.isInvisible &&
+        !e.isUntargetable &&
+        e.hp > 0 &&
+        getDistance(unit, e) <= range &&
+        getDistance(unit, e) > 5 // Don't hit self/super close
+    );
+    const towers = state.towers.filter(t => t.team !== unit.team && getDistance(unit, t) <= range);
+
+    const allTargets = [...targets, ...towers];
+
+    let target = null;
+    let minDist = Infinity;
+    allTargets.forEach(t => { const d = getDistance(unit, t); if(d < minDist){ minDist = d; target = t;} });
+
+    if (target) {
+        // Visual Trail
+        state.particles.push({x: unit.x, y: unit.y, vx: 0, vy: 0, life: 0.5, color: '#fbbf24', radius: 10});
+
+        // Teleport Hit
+        unit.x = target.x;
+        unit.y = target.y;
+        applyDamage(target, 200, 0, unit); // Dash Dmg
+
+        setTimeout(() => {
+            chainDashAttack(unit, dashesLeft - 1, range);
+        }, 100); // 100ms delay between dashes
+    } else {
+        unit.isUntargetable = false; // No more targets, stop
+        // Dash chain ended early, start cooldown
+        unit.abilityTimer = unit.abilityCooldown;
+        unit.isAbilityActive = false;
+    }
+}
+
+// --- ENTITY UPDATE LOOP ---
+function updateEntities(dt) {
+  state.towers = state.towers.filter(t => t.hp > 0);
+  const pKings = state.towers.filter(t => t.team === 'player' && t.type === 'king');
+  const pPrincess = state.towers.filter(t => t.team === 'player' && t.type === 'princess');
+  if (pKings.length > 0 && pPrincess.length < 2) pKings[0].active = true;
+  const eKings = state.towers.filter(t => t.team === 'enemy' && t.type === 'king');
+  const ePrincess = state.towers.filter(t => t.team === 'enemy' && t.type === 'princess');
+  if (eKings.length > 0 && ePrincess.length < 2) eKings[0].active = true;
+
+  state.units.forEach(u => {
+      // 1. Handle Timers
+      if (u.isRaged) { u.rageTimer -= dt; if (u.rageTimer <= 0) u.isRaged = false; }
+      if (u.isFrozen) { u.freezeTimer -= dt; if (u.freezeTimer <= 0) u.isFrozen = false; }
+      if (u.isSlowed) { u.slowTimer -= dt; if (u.slowTimer <= 0) u.isSlowed = false; }
+      if (u.isSnared) { u.snareTimer -= dt; if (u.snareTimer <= 0) u.isSnared = false; }
+      if (u.abilityTimer > 0) { u.abilityTimer -= dt; if(u.abilityTimer < 0) u.abilityTimer = 0; }
+
+      // --- LITTLE PRINCE CHANNELING TIMER ---
+      if (u.isChanneling && u.channelTimer > 0) {
+          u.channelTimer -= dt;
+          if (u.channelTimer <= 0) {
+              u.isChanneling = false; // Resume attacking/moving
+          }
+      }
+
+      // --- GUARDIAN CHARGE LOGIC (The "Log" Phase) ---
+      if (u.isGuardianCharging) {
+          // 1. Move like a projectile
+          u.chargeDuration -= dt;
+          u.y += u.chargeSpeed * dt * u.chargeDir;
+
+          // Visual trail
+          if (Math.random() > 0.5) state.particles.push({x: u.x, y: u.y, vx: 0, vy: 0, life: 0.3, color: '#fff', radius: 10});
+
+          // 2. Detect collisions for Knockback (NO DAMAGE)
+          const targets = state.units.filter(e =>
+              e.team !== u.team &&
+              !e.isBuilding &&
+              !e.isGraveyard &&
+              !e.isInvisible &&
+              !e.isUntargetable &&
+              !u.hitIds.includes(e.id) // Don't hit same unit twice
+          );
+
+          targets.forEach(target => {
+              const dist = getDistance(u, target);
+              // Guardian is wide during charge (like a log)
+              if (dist < 50) {
+                  // PUSH BACK
+                  const pushDist = 120;
+                  // Push perpendicular to river or straight back? Game does straight back (y-axis).
+                  target.y += pushDist * u.chargeDir;
+
+                  // Keep bounds
+                  target.y = Math.max(20, Math.min(CANVAS_HEIGHT - 20, target.y));
+
+                  // Stun/Snare slightly
+                  target.speed = 0;
+                  setTimeout(() => { if(target) target.speed = target.baseSpeed; }, 500);
+
+                  u.hitIds.push(target.id); // Mark as hit
+                  spawnHitEffect(target.x, target.y, '#fff', 5); // Visual hit
+              }
+          });
+
+          // 3. End Charge -> Become Normal Troop
+          if (u.chargeDuration <= 0) {
+              u.isGuardianCharging = false;
+              u.isUntargetable = false; // Can take damage now
+              u.state = 'moving';       // AI takes over
+
+              // Slight visual pop to show he stopped
+              spawnHitEffect(u.x, u.y, '#9ca3af', 10);
+          }
+
+          // SKIP standard movement/attack logic while charging
+          return;
+      }
+
+      // --- ROYAL GHOST & STEALTH LOGIC ---
+      if (u.isRoyalGhost && !u.isFrozen && u.state !== 'deploying') {
+          if (!u.isInvisible) {
+              u.invisibleTimer -= dt;
+              if (u.invisibleTimer <= 0) {
+                  u.isInvisible = true; // Go stealth
+                  for(let k=0; k<5; k++) state.particles.push({x: u.x, y: u.y, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, life: 0.5, color: '#aaa'});
+              }
+          }
+      }
+
+      // --- ARCHER QUEEN COOLDOWN TRIGGER ---
+      // If she was invisible via ability and loses it (timer or attack), start cooldown
+      if (u.key === 'ARCHER_QUEEN' && u.isAbilityActive && !u.isInvisible) {
+          u.isAbilityActive = false;
+          u.abilityTimer = u.abilityCooldown;
+      }
+      // If Queen timer naturally expires
+      if (u.key === 'ARCHER_QUEEN' && u.isInvisible) {
+           u.invisibleTimer -= dt;
+           if (u.invisibleTimer <= 0) {
+                u.isInvisible = false;
+                // Logic above catches next frame
+           }
+      }
+
+      // --- MONK REFLECTION TIMER ---
+      if (u.isReflecting) {
+          u.reflectionTimer -= dt;
+          if (u.reflectionTimer <= 0) {
+              u.isReflecting = false;
+              u.isChanneling = false; // Resume movement
+              u.hasShield = false; // Remove visual
+              // Start Cooldown
+              u.abilityTimer = u.abilityCooldown;
+              u.isAbilityActive = false;
+          }
+      }
+
+      // 2. Reset Stats
+      u.speed = u.baseSpeed;
+      u.attackSpeed = u.baseAttackSpeed;
+      if (u.baseSpawnInterval) u.spawnInterval = u.baseSpawnInterval;
+
+      // 3. Apply Modifiers
+      if (u.isFrozen) {
+          u.speed = 0; u.attackSpeed = 999;
+      } else {
+          if (u.isRaged) {
+              u.speed *= 1.35; u.attackSpeed /= 1.35;
+              if (u.spawnInterval) u.spawnInterval /= 1.35;
+          }
+          if (u.isSlowed) {
+              u.speed *= 0.65; u.attackSpeed /= 0.65;
+              if (u.spawnInterval) u.spawnInterval /= 0.65;
+          }
+          if (u.isSnared) {
+              u.speed *= 0.3; // Snare slows movement by 70%
+          }
+      }
+
+      // MONK & PRINCE CHANNELING (Force Stop)
+      if (u.isChanneling) { u.speed = 0; }
+
+      // Goblin Giant Backpack Logic
+      if (u.isGoblinGiant && !u.isFrozen && u.state !== 'deploying') {
+          u.backpackCooldown -= dt;
+          if (u.backpackCooldown <= 0) {
+              const enemies = state.units.filter(e => e.team !== u.team && !e.isGraveyard && !e.isInvisible && !e.isPersistentSpell && !e.isUntargetable);
+              const towers = state.towers.filter(t => t.team !== u.team);
+              let backpackTarget = null; let minDist = u.backpackRange;
+              [...enemies, ...towers].forEach(target => { const dist = getDistance(u, target); if (dist <= minDist) { minDist = dist; backpackTarget = target; } });
+              if (backpackTarget) {
+                  state.projectiles.push({ x: u.x - 5, y: u.y - 10, target: backpackTarget, dmg: u.backpackDmg, team: u.team, sourceKey: 'SPEAR_GOBLINS', splash: false, sourceUnit: u });
+                  setTimeout(() => { if(u.hp > 0) state.projectiles.push({ x: u.x + 5, y: u.y - 10, target: backpackTarget, dmg: u.backpackDmg, team: u.team, sourceKey: 'SPEAR_GOBLINS', splash: false, sourceUnit: u }); }, 100);
+                  u.backpackCooldown = u.backpackAttackSpeed;
+              }
+          }
+      }
+
+      // Ram Rider Logic (Bola Attack)
+      if (u.isRamRider && !u.isFrozen && !u.isSnared && u.state !== 'deploying') {
+          u.riderCooldown -= dt;
+          if (u.riderCooldown <= 0) {
+              const potentialTargets = state.units.filter(e => e.team !== u.team && !e.isBuilding && !e.isGraveyard && !e.isInvisible && !e.isPersistentSpell && !e.isUntargetable && getDistance(u, e) <= u.riderRange);
+              let bolaTarget = null; let minBolaDist = Infinity;
+              potentialTargets.forEach(t => { const d = getDistance(u, t); if(d < minBolaDist) { minBolaDist = d; bolaTarget = t; } });
+              if (bolaTarget) {
+                  state.projectiles.push({ x: u.x, y: u.y - 10, target: bolaTarget, dmg: u.riderDmg, team: u.team, sourceKey: 'RAM_RIDER', splash: false, effect: 'SNARE', snareDuration: u.riderSnareDuration, sourceUnit: u });
+                  u.riderCooldown = u.riderAttackSpeed;
+              }
+          }
+      }
+
+      if (u.state === 'river_jumping') {
+          if (!u.isFrozen) {
+              u.jumpTime += dt; const progress = u.jumpTime / u.jumpDuration;
+              if (progress >= 1) {
+                  u.state = 'moving'; u.x = u.jumpTargetX; u.y = u.jumpTargetY; u.jumpHeight = 0;
+                  if(u.charge) { u.charging = false; u.chargeTimer = 0; }
+                  spawnHitEffect(u.x, u.y, '#fff', 5);
+              } else {
+                  u.x = u.jumpStartX + (u.jumpTargetX - u.jumpStartX) * progress;
+                  u.y = u.jumpStartY + (u.jumpTargetY - u.jumpStartY) * progress;
+                  u.jumpHeight = 60 * 4 * progress * (1 - progress);
+              }
+          }
+          return;
+      }
+      if (u.state === 'jump_charging') {
+          u.jumpChargeTimer -= dt; if (u.jumpChargeTimer <= 0) { u.state = 'jumping'; u.jumpTime = 0; u.jumpStartX = u.x; u.jumpStartY = u.y; } return;
+      }
+      if (u.isMegaKnight && u.state === 'jumping') {
+          if (!u.isFrozen) {
+              u.jumpTime += dt; const progress = u.jumpTime / u.jumpDuration;
+              if (progress >= 1) {
+                  u.x = u.jumpTargetX; u.y = u.jumpTargetY; u.jumpHeight = 0;
+                  doSplashDamage(u.x, u.y, u.splashRadius, u.jumpDmg, u.team, 0); spawnHitEffect(u.x, u.y, '#10b981', 15);
+                  u.state = 'moving'; u.cooldown = u.attackSpeed * 1.5;
+              } else {
+                  u.x = u.jumpStartX + (u.jumpTargetX - u.jumpStartX) * progress;
+                  u.y = u.jumpStartY + (u.jumpTargetY - u.jumpStartY) * progress;
+                  u.jumpHeight = 120 * 4 * progress * (1 - progress);
+              }
+          }
+          return;
+      }
+      if (u.isGraveyard && u.state === 'active') {
+          u.durationTimer -= dt; u.spawnTimer -= dt; u.particleTimer -= dt;
+          if (u.particleTimer <= 0) { spawnHitEffect(u.x, u.y, 'rgba(100, 100, 150, 0.9)', 1, 10); u.particleTimer = 0.1; }
+          if (u.spawnTimer <= 0 && u.spawnsLeft > 0) { const angle = Math.random() * Math.PI * 2; const dist = Math.random() * (u.radius - 10); spawnUnit(u.spawnUnit, u.team, u.x + dist * Math.cos(angle), u.y + dist * Math.sin(angle), true); u.spawnsLeft--; u.spawnTimer = u.spawnInterval; spawnHitEffect(u.x, u.y, '#374151', 2); }
+          if (u.durationTimer <= 0) u.hp = 0;
+      }
+      if (u.isPersistentSpell && u.state === 'active') {
+          u.durationTimer -= dt; u.tickTimer -= dt;
+          if (u.tickTimer <= 0) {
+              const enemiesInArea = state.units.filter(e => e.team !== u.team && getDistance(u, e) <= u.radius && (u.targetType === 'any' || (u.targetType === 'ground' && e.type === 'ground')) && !e.isGraveyard && !e.isInvisible);
+              const enemyTowersInArea = state.towers.filter(t => t.team !== u.team && getDistance(u, t) <= u.radius);
+              [...enemiesInArea, ...enemyTowersInArea].forEach(target => {
+                  let actualDmg = u.dmg;
+                  if (u.key === 'EARTHQUAKE') { if (target.type === 'princess' || target.type === 'king') actualDmg = u.earthquakeTowerDmg; else if (target.isBuilding) actualDmg = u.earthquakeBuildingDmg; else actualDmg = u.earthquakeUnitDmg; }
+                  if (actualDmg > 0) applyDamage(target, actualDmg, u.stunDuration); spawnHitEffect(target.x, target.y, u.key === 'POISON' ? '#800080' : u.key === 'GOBLIN_CURSE' ? '#5cb85c' : '#8B4513', 2);
+              });
+              u.tickTimer = u.tickInterval;
+          }
+          if (u.durationTimer <= 0) {
+              u.hp = 0; if (u.key === 'GOBLIN_CURSE' && u.onDeathSpawnUnit) { for (let i = 0; i < u.onDeathSpawnCount; i++) spawnUnit(u.onDeathSpawnUnit, u.team, u.x + (Math.random()*30-15), u.y + (Math.random()*30-15), true, 1); }
+          }
+      }
+      if (u.isBuilding && u.duration !== null && u.hpDecayPerSecond !== null) u.hp -= u.hpDecayPerSecond * dt;
+      if (u.durationTimer !== null && u.durationTimer !== undefined) { u.durationTimer -= dt; if (u.durationTimer <= 0) u.hp = 0; }
+      if (u.produceElixir) {
+          u.productionTimer -= dt;
+          if (u.productionTimer <= 0) {
+              if (u.team === 'player') state.playerElixir = Math.min(10, state.playerElixir + u.productionAmount); else state.enemyElixir = Math.min(10, state.enemyElixir + u.productionAmount);
+              spawnHitEffect(u.x, u.y, '#d946ef', 5, 2); state.particles.push({x: u.x, y: u.y, vx: 0, vy: 0, life: 0.6, color: 'rgba(232, 121, 249, 0.6)', radius: 30}); u.productionTimer = UNIT_TYPES[u.key].productionInterval;
+          }
+      }
+  });
+
+  state.units.forEach(u => {
+      // Deploy Logic
+      if (u.state === 'deploying') {
+          if (u.isMegaKnight) {
+               let target = findTarget(u);
+               if (target && getDistance(u, target) <= u.jumpRange) {
+                   u.state = 'jumping'; u.jumpStartX = u.x; u.jumpStartY = u.y; u.jumpTargetX = target.x; u.jumpTargetY = target.y;
+                   u.jumpTime = 0; u.jumpDuration = 0.7;
+                   return;
+               }
+          }
+          u.cooldown -= dt; if (u.cooldown <= 0) u.state = 'moving'; return;
+      }
+
+      u.cooldown -= dt; if (u.isFrozen) return; if (u.state === 'river_jumping') return;
+      if (u.state === 'jumping' || u.state === 'jump_charging') return;
+      if (u.isGuardianCharging) return; // SKIP LOGIC if charging
+
+      if (u.spawnUnit && !u.isGraveyard) {
+          u.spawnTimer -= dt; if (u.spawnTimer <= 0) { const spawnKey = u.spawnUnit; for(let k=0; k<u.spawnCount; k++) spawnUnit(spawnKey, u.team, u.x+(Math.random()*30-15), u.y+(Math.random()*20-10), true, 1); spawnHitEffect(u.x, u.y, '#a855f7'); u.spawnTimer = u.spawnInterval; }
+      }
+      if (u.charge && !u.isMegaKnight) {
+          if (u.state === 'moving' && (u.cooldown <= 0 || u.isRamRider) && !u.isSnared && !u.isChanneling) {
+              if (!u.charging) {
+                  u.chargeTimer += dt;
+                  if (u.chargeTimer >= 2.0) { u.charging = true; u.chargeTimer = 2.0; }
+              }
+              if (u.charging) { u.speed = u.speed * 2.5; }
+          } else {
+              u.chargeTimer = 0; u.charging = false;
+          }
+      }
+
+      let target = findTarget(u);
+
+      // Tesla Hide Logic
+      if (u.hideOnIdle) {
+          u.isInvisible = !target;
+      }
+
+      if (target) { if (u.lockedTargetId !== target.id) u.lockedTargetId = target.id; } else { u.lockedTargetId = null; if (u.isInferno) { u.dmgStage = 1; u.lastTargetId = null; } }
+      if (target) {
+          const dist = getDistance(u, target); const targetRadius = target.hitRadius || (target.width ? target.width / 2.0 : 0);
+
+          if (u.isMegaKnight && u.state === 'moving' && dist > u.range + 50 && dist <= u.jumpRange) {
+              u.state = 'jump_charging'; u.jumpChargeTimer = 0.5; u.jumpTargetX = target.x; u.jumpTargetY = target.y; u.jumpDuration = 0.8;
+              return;
+          }
+
+          if (u.isHunter) {
+              if (dist <= u.range && dist >= u.minRange) {
+                   if (u.cooldown <= 0 && !u.isChanneling) { // Channeling prevents attack
+                       if (u.isRoyalGhost) { u.isInvisible = false; u.invisibleTimer = u.invisibleDelay; }
+                       fireHunterShot(u, target, dist); u.cooldown = u.attackSpeed;
+                   }
+              } else if (dist < u.minRange) moveUnit(u, target, dt, true); else moveUnit(u, target, dt);
+          } else if (dist <= u.range + targetRadius) {
+              if (u.cooldown <= 0 && !u.isChanneling) { // Channeling prevents attack
+                  // Attack breaks invisibility (Ghost)
+                  if (u.isRoyalGhost) { u.isInvisible = false; u.invisibleTimer = u.invisibleDelay; }
+
+                  if (u.range > 50) {
+                      if (u.isInferno) fireInfernoBeam(u, target);
+                      else if (u.key === 'MORTAR') fireMortarShell(u, target);
+                      else if (u.isExecutioner && !u.isWaitingForAxe) fireExecutionerAxe(u, target);
+                      else if (u.isMagicArcher) fireMagicArrow(u, target);
+                      else if (u.isBowler) fireBowlerRock(u, target);
+                      else fireProjectile(u, target);
+
+                      if (u.isFirecracker) { const angle = Math.atan2(target.y - u.y, target.x - u.x); u.x -= Math.cos(angle) * u.recoilDistance; u.y -= Math.sin(angle) * u.recoilDistance; u.x = Math.max(20, Math.min(CANVAS_WIDTH - 20, u.x)); const riverY = CANVAS_HEIGHT / 1.9; if (u.team === 'player') u.y = Math.min(CANVAS_HEIGHT - 20, Math.max(riverY + 20, u.y)); else u.y = Math.max(20, Math.min(riverY - 20, u.y)); }
+                  } else {
+                      let damage = u.dmg; if (u.charging) { damage *= 2; u.charging = false; u.chargeTimer = 0; spawnHitEffect(target.x, target.y, '#fff', 10); }
+
+                      if (u.key === 'MONK') {
+                           // --- MONK 3-HIT COMBO LOGIC ---
+                           if (u.comboTargetId !== target.id) {
+                               u.comboCount = 0;
+                               u.comboTargetId = target.id;
+                           }
+                           u.comboCount++;
+
+                           if (u.comboCount >= 3) {
+                               // 3rd Hit: Double Damage + Knockback
+                               applyDamage(target, damage * 2, u.stunDuration, u);
+
+                               // PUSH LOGIC (Ignores Buildings)
+                               // "On the troop line" means directly away from the monk in the direction of the punch.
+                               const isImmuneToPush = target.isBuilding || target.type === 'princess' || target.type === 'king';
+
+                               if (!isImmuneToPush) {
+                                   const angle = Math.atan2(target.y - u.y, target.x - u.x);
+                                   const pushDist = 80;
+                                   target.x += Math.cos(angle) * pushDist;
+                                   target.y += Math.sin(angle) * pushDist;
+                                   // Keep in bounds
+                                   target.x = Math.max(0, Math.min(CANVAS_WIDTH, target.x));
+                                   target.y = Math.max(0, Math.min(CANVAS_HEIGHT, target.y));
+                               }
+
+                               spawnHitEffect(target.x, target.y, '#fff', 8); // White heavy hit
+                               u.comboCount = 0;
+                           } else {
+                               // Normal Hit
+                               applyDamage(target, damage, u.stunDuration, u);
+                           }
+
+                      } else {
+                          // Standard Melee Hit
+                          if (u.splash) { doSplashDamage(u.x, u.y, u.splashRadius, damage, u.team, u.stunDuration, u); spawnHitEffect(u.x, u.y, '#ea580c'); } else { applyDamage(target, damage, u.stunDuration, u, u.isEChainer ? u : null); if (u.key === 'BATTLE_RAM' && (target.isBuilding || target.type === 'princess' || target.type === 'king')) u.hp = 0; }
+                      }
+
+                      if (u.healOnHit) doSplashHeal(u.x, u.y, u.healRadius, u.healAmount, u.team);
+                      if (u.suicide) { if (u.healAmount > 0 && !u.healOnHit) doSplashHeal(u.x, u.y, u.healRadius, u.healAmount, u.team); u.hp = 0; spawnHitEffect(u.x, u.y, '#ef4444', 8); }
+                      if (u.isInferno) u.dmgStage = 1;
+                  }
+                  u.cooldown = u.attackSpeed;
+              }
+          } else { if (!u.isWaitingForAxe) moveUnit(u, target, dt); }
+      }
+  });
+
+  for (let i = state.units.length - 1; i >= 0; i--) {
+      const u = state.units[i];
+      if (u.hp <= 0) {
+          if (u.lastHitBy && u.lastHitBy.isMotherWitch && u.team !== u.lastHitBy.team) spawnUnit('CURSED_HOG', u.lastHitBy.team, u.x, u.y, true);
+          if (u.team === 'player' || u.team === 'enemy') { state.units.filter(spell => spell.key === 'GOBLIN_CURSE' && spell.team !== u.team && spell.isPersistentSpell && getDistance(spell, u) <= spell.radius).forEach(curse => { if (curse.onDeathSpawnUnit) { for (let k = 0; k < curse.onDeathSpawnCount; k++) spawnUnit(curse.onDeathSpawnUnit, curse.team, u.x+(Math.random()*20-10), u.y+(Math.random()*20-10), true, 1); } }); }
+          if (u.giveElixirOnDeath) { const amount = u.giveElixirOnDeath; if (u.team === 'player') { state.enemyElixir = Math.min(10, state.enemyElixir + amount); spawnHitEffect(u.x, u.y, '#dc2626', 10); } else { state.playerElixir = Math.min(10, state.playerElixir + amount); spawnHitEffect(u.x, u.y, '#d946ef', 10); } }
+          if (u.onDeathEffect) {
+              if (u.onDeathEffect === 'RAGE') applyRageEffect(u.x, u.y, u.team, 80, 4.5);
+              else if (u.onDeathEffect === 'FROST_NOVA') triggerSpellEffect('FROST_NOVA', u.team, u.x, u.y); // ICE GOLEM DEATH
+              else if (UNIT_TYPES[u.onDeathEffect] && UNIT_TYPES[u.onDeathEffect].type === 'spell') spawnSpell(u.onDeathEffect, u.team, u.x, u.y);
+              else { const dK = u.onDeathEffect; const c = u.deathSpawnCount || 1; for (let k = 0; k < c; k++) spawnUnit(dK, u.team, u.x+(Math.random()*30-15), u.y+(Math.random()*30-15), true, 1); }
+          }
+          state.units.splice(i, 1);
+      }
+  }
+
+  state.towers.forEach(t => {
+      if (!t.active) return;
+      if (t.isFrozen) { t.freezeTimer -= dt; if (t.freezeTimer <= 0) t.isFrozen = false; else return; }
+      t.cooldown -= dt;
+      if (t.cooldown <= 0) {
+          let target = null;
+          if (t.lockedTargetId) {
+              const lockedUnit = state.units.find(u => u.id === t.lockedTargetId);
+              if (lockedUnit && lockedUnit.hp > 0 && !lockedUnit.isInvisible && !lockedUnit.isUntargetable && !lockedUnit.isGraveyard && getDistance(t, lockedUnit) <= t.range) { target = lockedUnit; } else { t.lockedTargetId = null; }
+          }
+          if (!target) {
+              const enemies = state.units.filter(u => u.team !== t.team && !u.isGraveyard && !u.isInvisible && !u.isPersistentSpell && !u.isUntargetable);
+              let closest = null, minDist = t.range;
+              enemies.forEach(e => { const d = getDistance(t, e); if (d <= minDist) { minDist = d; closest = e; } });
+              if (closest) { target = closest; t.lockedTargetId = closest.id; }
+          }
+          if (target) { fireProjectile(t, target); t.cooldown = t.attackSpeed; }
+      }
+  });
+
+  for (let i = state.projectiles.length - 1; i >= 0; i--) {
+      const p = state.projectiles[i];
+
+      // BOWLER ROCK UPDATE LOGIC
+      if (p.type === 'bowler_rock') {
+          p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
+          const enemies = state.units.filter(u => u.team !== p.team && u.type !== 'air' && !u.isGraveyard && !u.isInvisible && !u.isPersistentSpell && !u.isUntargetable);
+          const enemyTowers = state.towers.filter(t => t.team !== p.team);
+          [...enemies, ...enemyTowers].forEach(ent => {
+             if (p.hitIds.includes(ent.id)) return;
+             const hitR = (ent.hitRadius || (ent.width ? ent.width/2 : 15)) + p.width/2;
+             if (getDistance(p, ent) < hitR) {
+                 applyDamage(ent, p.dmg, 0, p.sourceUnit);
+                 p.hitIds.push(ent.id);
+                 spawnHitEffect(ent.x, ent.y, '#aaa', 5);
+                 if (p.knockback && !ent.isBuilding && ent.type !== 'king' && ent.type !== 'princess') {
+                    const kAngle = Math.atan2(p.vy, p.vx); ent.x += Math.cos(kAngle) * p.knockback; ent.y += Math.sin(kAngle) * p.knockback;
+                    ent.x = Math.max(0, Math.min(CANVAS_WIDTH, ent.x)); ent.y = Math.max(0, Math.min(CANVAS_HEIGHT, ent.y));
+                 }
+             }
+          });
+          if (p.life <= 0) { state.projectiles.splice(i, 1); } continue;
+      }
+
+      // MAGIC ARCHER ARROW UPDATE LOGIC
+      if (p.type === 'linear_piercing') {
+          p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
+          const enemies = state.units.filter(u => u.team !== p.team && !u.isGraveyard && !u.isInvisible && !u.isPersistentSpell && !u.isUntargetable);
+          const enemyTowers = state.towers.filter(t => t.team !== p.team);
+          [...enemies, ...enemyTowers].forEach(ent => {
+             if (p.hitIds.includes(ent.id)) return;
+             const hitR = (ent.hitRadius || (ent.width ? ent.width/2 : 15)) + p.width/2;
+             if (getDistance(p, ent) < hitR) { applyDamage(ent, p.dmg, 0, p.sourceUnit); p.hitIds.push(ent.id); spawnHitEffect(ent.x, ent.y, '#2dd4bf', 5); }
+          });
+          if (p.life <= 0) { state.projectiles.splice(i, 1); } continue;
+      }
+
+      if (p.type === 'spell_arc') { p.progress += dt / p.duration; if (p.progress >= 1) { p.onHit(); state.projectiles.splice(i, 1); continue; } p.x = p.startX + (p.targetX - p.startX) * p.progress; p.y = p.startY + (p.targetY - p.startY) * p.progress; continue; }
+      if (p.type === 'spell_arrow') { p.progress += dt / p.duration; if (p.progress >= 1) { state.projectiles.splice(i, 1); continue; } p.x = p.startX + (p.targetX - p.startX) * p.progress; p.y = p.startY + (p.targetY - p.startY) * p.progress; continue; }
+      if (p.type === 'spell_delay_vis' || p.type === 'spell_timer') { p.timer -= dt; if (p.timer <= 0) { p.onHit(); state.projectiles.splice(i, 1); } continue; }
+      if (p.type === 'rolling') {
+          const moveStep = p.vy * dt; p.y += moveStep; p.distTraveled += Math.abs(moveStep); p.rotation += (moveStep / 10);
+          const targets = state.units.filter(u => u.team !== p.team && !u.isGraveyard && !u.isInvisible && !u.isUntargetable && !u.isPersistentSpell);
+          const enemyTowers = state.towers.filter(t => t.team !== p.team);
+          [...targets, ...enemyTowers].forEach(target => {
+               if (p.hitIds.includes(target.id)) return;
+               const targetRadius = target.hitRadius || (target.width?target.width/2 : 15);
+               const dx = Math.abs(target.x - p.x); const dy = Math.abs(target.y - p.y);
+               if (dx > (p.width/2 + targetRadius)) return; if (dy > (p.height/2 + targetRadius)) return;
+               applyDamage(target, p.dmg); if (p.knockback && target.type !== 'building' && target.type !== 'princess' && target.type !== 'king') { const pushDir = Math.sign(p.vy); target.y += pushDir * p.knockback; } p.hitIds.push(target.id); spawnHitEffect(target.x, target.y, '#fff', 3);
+          });
+          if (p.distTraveled >= p.range) { if (p.spawnUnit) { spawnUnit(p.spawnUnit, p.team, p.x, p.y, true, 1); spawnHitEffect(p.x, p.y, '#facc15', 10); } state.projectiles.splice(i, 1); } continue;
+      }
+
+      if (p.isShrapnel) {
+          p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
+          const enemies = state.units.filter(u => u.team !== p.team && !u.isGraveyard && !u.isInvisible && !u.isPersistentSpell && !u.isUntargetable);
+          const enemyTowers = state.towers.filter(t => t.team !== p.team);
+          [...enemies, ...enemyTowers].forEach(ent => {
+             const hitR = (ent.hitRadius || (ent.width ? ent.width/2 : 15)) + 5;
+             if (getDistance(p, ent) < hitR && !p.hitIds.includes(ent.id)) {
+                 applyDamage(ent, p.dmg, 0, p.sourceUnit);
+                 spawnHitEffect(ent.x, ent.y, '#ff4500', 3);
+                 p.hitIds.push(ent.id);
+             }
+          });
+          if (p.life <= 0) { state.projectiles.splice(i, 1); } continue;
+      }
+
+      if (p.isBoomerang) {
+          let moveX = 0, moveY = 0; const step = p.speed * dt;
+          if (p.state === 'out') { moveX = Math.cos(p.angle) * step; moveY = Math.sin(p.angle) * step; p.distanceTraveled += step; if (p.distanceTraveled >= p.maxDistance) { p.state = 'back'; p.hitList = []; } } else {
+               const owner = state.units.find(u => u.id === p.ownerId); if (!owner || owner.hp <= 0) { state.projectiles.splice(i, 1); continue; }
+               const dx = owner.x - p.x; const dy = owner.y - p.y; const distToOwner = Math.hypot(dx, dy);
+               if (distToOwner < 10) { owner.isWaitingForAxe = false; state.projectiles.splice(i, 1); continue; }
+               moveX = (dx / distToOwner) * step; moveY = (dy / distToOwner) * step;
+          }
+          p.x += moveX; p.y += moveY;
+          const enemies = state.units.filter(u => u.team !== p.team && !u.isGraveyard && !u.isInvisible && !u.isPersistentSpell && !u.isUntargetable); const enemyTowers = state.towers.filter(t => t.team !== p.team);
+          [...enemies, ...enemyTowers].forEach(ent => { const hitR = ent.hitRadius || (ent.width ? ent.width/2 : 15) + p.radius; if (getDistance(p, ent) < hitR) { if (!p.hitList.includes(ent.id)) { applyDamage(ent, p.dmg, 0, null); p.hitList.push(ent.id); spawnHitEffect(ent.x, ent.y, '#6a0dad'); } } }); continue;
+      }
+      const target = p.target;
+      if (!target || (target.hp <= 0 && (!target.hasShield || target.shieldHp <= 0))) { state.projectiles.splice(i, 1); continue; }
+
+      // --- MONK REFLECTION LOGIC (UPDATED: EXCLUDE ELECTRO) ---
+      if (target.isReflecting && target.team !== p.team) {
+            const srcUnitType = p.sourceKey ? UNIT_TYPES[p.sourceKey] : null;
+            // CHECK FOR NON-REFLECTABLE SOURCES (Electro, etc. Melee/Inferno are handled by applyDamage directly as they are not projectiles here)
+            const isElectro = (srcUnitType && (srcUnitType.isEChainer || srcUnitType.isElectroGiant)) || p.sourceKey === 'ZAP';
+
+            if (!isElectro) {
+                const dist = Math.hypot(target.x - p.x, target.y - p.y);
+                if (dist < 40) { // Reflection Radius
+                    p.team = target.team; // Switch allegiance
+                    p.vx = -p.vx; // Reverse X
+                    p.vy = -p.vy; // Reverse Y
+                    p.target = p.sourceUnit; // Return to sender
+                    p.sourceUnit = target; // Monk is now the source
+                    spawnHitEffect(p.x, p.y, '#fff', 5);
+                    return; // Skip damage application this frame
+                }
+            }
+            // If it IS electro, it falls through to hit check below, then applies damage (which is reduced in applyDamage)
+      }
+
+      const dx = target.x - p.x; const dy = target.y - p.y; const dist = Math.hypot(dx, dy);
+      const hitRadius = target.hitRadius || (target.width ? target.width / 2.0 : 10);
+      if (dist < hitRadius) {
+          if (p.splash) { doSplashDamage(p.x, p.y, p.splashRadius, p.dmg, p.team, p.stunDuration, p.sourceUnit); spawnHitEffect(p.x, p.y, '#f97316'); } else {
+              applyDamage(target, p.dmg, p.stunDuration, p.sourceUnit, p.sourceUnit && p.sourceUnit.isEChainer ? p.sourceUnit : null);
+              if (p.effect === 'SNARE') {
+                  target.isSnared = true; target.snareTimer = p.snareDuration;
+                  for(let k=0; k<3; k++) state.particles.push({x: target.x, y: target.y, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3, life: 0.5, color: '#888'});
+              }
+          }
+          if (p.sourceUnit && p.sourceUnit.isFirecracker) {
+              const impactAngle = Math.atan2(dy, dx); const shrapnelCount = 5;
+              const totalSpread = Math.PI / 3; // Reduced from PI/2 for tighter spread
+              for(let k=0; k<shrapnelCount; k++) { const angleOffset = -totalSpread/2 + (totalSpread * k / (shrapnelCount - 1)); const shrapnelAngle = impactAngle + angleOffset; state.projectiles.push({ x: target.x, y: target.y, vx: Math.cos(shrapnelAngle) * 450, vy: Math.sin(shrapnelAngle) * 450, dmg: p.dmg, team: p.team, isShrapnel: true, life: 0.4, hitIds: [target.id] }); }
+          }
+          state.projectiles.splice(i, 1);
+      } else { const speed = 300 * dt; p.x += (dx / dist) * speed; p.y += (dy / dist) * speed; }
+  }
+  for (let i = state.particles.length - 1; i >= 0; i--) { const p = state.particles[i]; p.life -= dt; p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; if (p.life <= 0) state.particles.splice(i, 1); }
+}
+function startRiverJump(u, riverY) { u.state = 'river_jumping'; u.jumpStartX = u.x; u.jumpStartY = u.y; u.jumpTime = 0; u.jumpDuration = 0.65; const dir = u.y < riverY ? 1 : -1; u.jumpTargetY = riverY + (dir * 70); u.jumpTargetX = u.x; u.speed = 0; }
+function moveUnit(u, target, dt, moveAway = false) {
+  if (u.state === 'river_jumping' || u.state === 'jumping' || u.state === 'jump_charging') return;
+  // MONK / PRINCE STOP CHECK
+  if (u.isChanneling) { u.speed = 0; return; }
+
+  let targetX = target.x; let targetY = target.y;
+  if (u.type === 'ground') {
+      const riverY = CANVAS_HEIGHT / 1.9;
+      const bridgeLeftX = CANVAS_WIDTH * 0.2;
+      const bridgeRightX = CANVAS_WIDTH * 0.8;
+
+      const crossRiver = (u.y > riverY && target.y < riverY) || (u.y < riverY && target.y > riverY);
+
+      if (crossRiver) {
+          const onLeftBridge = Math.abs(u.x - bridgeLeftX) < 25;
+          const onRightBridge = Math.abs(u.x - bridgeRightX) < 25;
+          const isOnBridge = onLeftBridge || onRightBridge;
+
+          if (u.canJumpRiver && !isOnBridge) {
+               if (Math.abs(u.y - riverY) < 55) { startRiverJump(u, riverY); return; }
+          }
+          else if (!isOnBridge) {
+              const distLeft = Math.abs(u.x - bridgeLeftX);
+              const distRight = Math.abs(u.x - bridgeRightX);
+              const bridgeX = distLeft < distRight ? bridgeLeftX : bridgeRightX;
+              if (Math.abs(u.x - bridgeX) > 10) { targetX = bridgeX; targetY = riverY; }
+          }
+      }
+  }
+  let dx = targetX - u.x; let dy = targetY - u.y; let dist = Math.hypot(dx, dy);
+  if (dist > 0) {
+      let dirX = dx / dist; let dirY = dy / dist; if (moveAway) { dirX = -dirX; dirY = -dirY; }
+      if (u.type === 'ground') {
+          const obstacles = [...state.towers.filter(t => t.team === u.team), ...state.units.filter(build => build.isBuilding && build.team === u.team && build.id !== u.id && !build.isGraveyard && !build.burrowDeploy)];
+          obstacles.forEach(obs => { const obsRadius = (obs.width ? obs.width / 2 : 25); const avoidRadius = obsRadius + (u.radius || 15); const distToObs = getDistance(u, obs); if (distToObs < avoidRadius) { let pushX = u.x - obs.x; let pushY = u.y - obs.y; const pushLen = Math.hypot(pushX, pushY); if (pushLen > 0) { pushX /= pushLen; pushY /= pushLen; const force = 3.0; dirX += pushX * force; dirY += pushY * force; } } });
+      }
+      const newLen = Math.hypot(dirX, dirY); if (newLen > 0) { dirX /= newLen; dirY /= newLen; }
+      const moveDist = u.speed * dt; u.x += dirX * moveDist; u.y += dirY * moveDist;
+  }
+}
+
+// --- AI LOGIC (RIVER AVOIDANCE) ---
+function updateAI(dt) {
+    if (isPvP) return; // Si hay un humano, la IA no hace nada
+    state.enemyNextSpawn -= dt;
+    if (state.enemyNextSpawn > 0) return;
+
+    const minElixir = (state.gameMode === 'ranked') ? 6 : 3;
+    if (state.enemyElixir < minElixir) return;
+
+    const playerUnits = state.units.filter(u => u.team === 'player' && !u.isGraveyard && !u.isInvisible);
+    let affordable = state.enemyHand.filter(k => k && UNIT_TYPES[k].cost <= state.enemyElixir);
+    if (affordable.length === 0) return;
+
+    let chosenCard = affordable[0];
+    let deployX = Math.random() * CANVAS_WIDTH;
+    let deployY = 100;
+
+    const cardData = UNIT_TYPES[chosenCard];
+    if (cardData.type === 'spell') {
+        if (playerUnits.length > 0) spawnSpell(chosenCard, 'enemy', playerUnits[0].x, playerUnits[0].y);
+    } else {
+        spawnUnit(chosenCard, 'enemy', deployX, deployY);
+    }
+
+    state.enemyElixir -= cardData.cost;
+    state.enemyNextSpawn = (state.gameMode === 'ranked' ? 0.8 : 2.0) + Math.random();
+    const idx = state.enemyHand.indexOf(chosenCard);
+    state.enemyDeck.push(chosenCard);
+    state.enemyHand[idx] = state.enemyDeck.shift();
+}
+
+function updateUI() {
+    const fill = document.getElementById('elixir-fill');
+    const text = document.getElementById('elixir-text');
+    const pct = (state.playerElixir / 10) * 100;
+    if (fill) fill.style.width = `${pct}%`;
+    if (text) text.textContent = `${Math.floor(state.playerElixir)} / 10`;
+
+    document.querySelectorAll('.card').forEach(c => {
+        const cost = c.querySelector('.card-cost').textContent;
+        const numericCost = cost === '?' ? 99 : parseInt(cost);
+        if (state.playerElixir < numericCost) c.classList.add('disabled');
+        else c.classList.remove('disabled');
+    });
+
+    const pTowers = state.towers.filter(t => t.team === 'player').length;
+    const eTowers = state.towers.filter(t => t.team === 'enemy').length;
+    document.querySelector('#score .blue').textContent = 3 - eTowers;
+    document.querySelector('#score .red').textContent = 3 - pTowers;
+
+    const abilityBtn = document.getElementById('ability-btn');
+    if (state.activeChampionId) {
+        const champ = state.units.find(u => u.id === state.activeChampionId);
+        if (champ && champ.hp > 0) {
+            abilityBtn.style.display = 'flex';
+            const costEl = document.getElementById('ability-cost');
+            if (champ.abilityTimer > 0) {
+                costEl.textContent = Math.ceil(champ.abilityTimer) + 's';
+                abilityBtn.classList.add('disabled');
+            } else {
+                costEl.textContent = champ.abilityCost;
+                if (state.playerElixir >= champ.abilityCost) abilityBtn.classList.remove('disabled');
+                else abilityBtn.classList.add('disabled');
+            }
+        } else { state.activeChampionId = null; abilityBtn.style.display = 'none'; }
+    } else { abilityBtn.style.display = 'none'; }
+}
+function applyDamage(target, damage, stunDuration = 0, sourceUnit = null, eChainerSource = null) {
+    let finalDamage = damage;
+
+    // MONK DAMAGE REDUCTION (65% less if he can't deflect it)
+    if (target.isReflecting) {
+        // Since reflection is handled in the projectile loop for things he CAN reflect,
+        // any damage reaching here is either a projectile he couldn't reflect (Electro)
+        // or a direct attack (Melee, Inferno, etc.).
+        finalDamage = finalDamage * 0.35; // Reduce by 65%
+    }
+
+    if (target.hasShield && target.shieldHp > 0) { target.shieldHp -= finalDamage; if (target.shieldHp < 0) target.shieldHp = 0; } else target.hp -= finalDamage;
+    if (target.type === 'king') target.active = true;
+    spawnHitEffect(target.x, target.y);
+    if (stunDuration > 0) applyStunEffect(target.x, target.y, 0, stunDuration, target.team === 'player' ? 'enemy' : 'player', target);
+    if (sourceUnit) {
+        target.lastHitBy = sourceUnit;
+        if (sourceUnit.charge) { sourceUnit.chargeTimer = 0; sourceUnit.charging = false; sourceUnit.speed = sourceUnit.baseSpeed; }
+        if (sourceUnit.isIceWizard) { target.isSlowed = true; target.slowTimer = UNIT_TYPES['ICE_WIZARD'].slowDuration; } // ICE WIZARD SLOW
+    }
+    if (target.isElectroGiant && finalDamage > 0) { state.units.filter(e => e.team !== target.team && getDistance(target, e) <= target.electroRange).forEach(e => { applyStunEffect(e.x, e.y, 0, target.stunDuration, target.team); spawnHitEffect(e.x, e.y, '#ffd700', 3, 5); }); }
+    if (eChainerSource) chainElectricDamage(target, eChainerSource, eChainerSource.chainCount, eChainerSource.chainRange, eChainerSource.chainDmg, eChainerSource.chainStunDuration, [target.id]);
+}
+function applyKnockback(x, y, radius, knockbackDistance, attackerTeam) {
+    const enemies = state.units.filter(u => u.team !== attackerTeam && !u.isGraveyard && u.type !== 'air' && !u.isPersistentSpell && !u.isUntargetable && !u.isInvisible);
+    enemies.forEach(u => { const d = getDistance({x: x, y: y}, u); if (d <= radius) { const angle = Math.atan2(u.y - y, u.x - x); u.x += knockbackDistance * Math.cos(angle); u.y += knockbackDistance * Math.sin(angle); u.x = Math.max(0, Math.min(CANVAS_WIDTH, u.x)); u.y = Math.max(0, Math.min(CANVAS_HEIGHT, u.y)); spawnHitEffect(u.x, u.y, '#ccc', 5, 5); } });
+}
+function applyFreezeEffect(x, y, radius, duration, team) {
+    state.units.filter(u => u.team !== team && u.hp > 0 && !u.isPersistentSpell && !u.isUntargetable && !u.isInvisible).forEach(e => { if (getDistance({x: x, y: y}, e) <= radius) { e.isFrozen = true; e.freezeTimer = duration; e.baseSpeed = e.baseSpeed || e.speed; e.baseAttackSpeed = e.baseAttackSpeed || e.attackSpeed; e.speed = 0; e.attackSpeed = 999; e.lockedTargetId = null; if (e.isInferno) { e.dmgStage = 1; e.lastTargetId = null; } for(let i=0; i<10; i++) state.particles.push({x: e.x, y: e.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 0.5, color: '#93c5fd'}); } });
+}
+function applySlowEffect(x, y, radius, duration, team) {
+    const targets = state.units.filter(u => u.team !== team && u.hp > 0 && !u.isPersistentSpell && !u.isUntargetable && !u.isInvisible && !u.isBuilding);
+    targets.forEach(u => { if (getDistance({x: x, y: y}, u) <= radius) { u.isSlowed = true; u.slowTimer = duration; for(let i=0; i<3; i++) state.particles.push({x: u.x, y: u.y, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, life: 0.8, color: '#bae6fd'}); } });
+}
+function applyStunEffect(x, y, radius, duration, team, singleTarget = null) {
+    const targets = singleTarget ? [singleTarget] : state.units.filter(u => u.team !== team && u.hp > 0 && !u.isPersistentSpell && !u.isUntargetable && !u.isInvisible);
+    targets.forEach(e => { if (getDistance({x: x, y: y}, e) <= radius || singleTarget) { e.isFrozen = true; e.freezeTimer = Math.max(e.freezeTimer || 0, duration); e.speed = 0; e.attackSpeed = 999; e.lockedTargetId = null; if (e.isInferno) { e.dmgStage = 1; e.lastTargetId = null; } for(let i=0; i<5; i++) state.particles.push({x: e.x, y: e.y, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3, life: 0.3, color: '#ffd700'}); } });
+}
+function chainElectricDamage(currentTarget, sourceUnit, chainsLeft, chainRange, chainDmg, chainStunDuration, hitIds = []) {
+  if (chainsLeft <= 0) return;
+  const possibleTargets = [...state.units.filter(u => { if (u.team === sourceUnit.team || u.id === currentTarget.id || hitIds.includes(u.id)) return false; if (u.isGraveyard || u.isInvisible || u.isPersistentSpell || u.isUntargetable) return false; if (sourceUnit.targetType === 'ground' && u.type === 'air') return false; return true; }), ...state.towers.filter(t => t.team !== sourceUnit.team && t.id !== currentTarget.id && !hitIds.includes(t.id))].filter(target => getDistance(currentTarget, target) <= chainRange);
+  let closestTarget = null, minDistance = Infinity; possibleTargets.forEach(target => { const dist = getDistance(currentTarget, target); if (dist < minDistance) { minDistance = dist; closestTarget = target; } });
+  if (closestTarget) { applyDamage(closestTarget, chainDmg, chainStunDuration, sourceUnit); state.particles.push({x: currentTarget.x, y: currentTarget.y, vx: (closestTarget.x-currentTarget.x)/50, vy: (closestTarget.y-currentTarget.y)/50, life: 0.2, color: '#ADD8E6'}); state.particles.push({x: closestTarget.x, y: closestTarget.y, vx: (currentTarget.x-closestTarget.x)/50, vy: (currentTarget.y-closestTarget.y)/50, life: 0.2, color: '#ADD8E6'}); chainElectricDamage(closestTarget, sourceUnit, chainsLeft - 1, chainRange, chainDmg, chainStunDuration, [...hitIds, closestTarget.id]); }
+}
+function findTarget(u) {
+  if (u.isGraveyard || u.isPersistentSpell || u.isUntargetable) return null;
+  if (u.lockedTargetId) {
+      const allEntities = [...state.units, ...state.towers]; const lockedEntity = allEntities.find(e => e.id === u.lockedTargetId);
+      let validLock = true;
+      if (!lockedEntity || lockedEntity.hp <= 0 || lockedEntity.team === u.team || lockedEntity.isInvisible || lockedEntity.isUntargetable || lockedEntity.isGraveyard || lockedEntity.isPersistentSpell) { validLock = false; }
+      else {
+          if (u.targetType === 'ground' && lockedEntity.type === 'air') validLock = false;
+          if (u.targetType === 'building' && !lockedEntity.isBuilding && lockedEntity.type !== 'princess' && lockedEntity.type !== 'king') validLock = false;
+          if (validLock) {
+              const dist = getDistance(u, lockedEntity);
+              if (u.minRange && dist < u.minRange) validLock = false;
+              else { const targetRadius = lockedEntity.hitRadius || (lockedEntity.width ? lockedEntity.width / 2.0 : 15); const maintainLockDist = u.range + targetRadius; if (dist > maintainLockDist) validLock = false; }
+          }
+      }
+      if (validLock) return lockedEntity;
+      u.lockedTargetId = null; if (u.isInferno) { u.dmgStage = 1; u.lastTargetId = null; }
+  }
+  const enemies = state.units.filter(e => {
+      if (e.isInvisible) return false; // STEALTH CHECK
+      if (e.isUntargetable) return false;
+      if (u.targetType === 'ground' && e.type === 'air') return false;
+      if (u.targetType === 'building' && !e.isBuilding) return false;
+      if (e.team === u.team || e.isGraveyard || e.isPersistentSpell) return false;
+      if (u.minRange && getDistance(u, e) < u.minRange) return false;
+      return true;
+  });
+  const towers = state.towers.filter(t => t.team !== u.team && !(u.minRange && getDistance(u, t) < u.minRange));
+  let closest = null; let minDist = Infinity;
+  if (u.targetType === 'building') { [...towers, ...enemies.filter(e => e.isBuilding)].forEach(target => { const d = getDistance(u, target); if (d < minDist) { minDist = d; closest = target; } }); return closest; }
+  enemies.forEach(e => { const d = getDistance(u, e); if (d < minDist) { minDist = d; closest = e; } });
+  if (u.targetType !== 'air') { towers.forEach(t => { const d = getDistance(u, t); if (d < minDist) { minDist = d; closest = t; } }); }
+  return closest;
+}
+function fireProjectile(source, target) { state.projectiles.push({ x: source.x, y: source.y, target: target, dmg: source.dmg || source.damage, team: source.team, sourceKey: source.key, splash: source.splash || false, splashRadius: source.splashRadius || 0, stunDuration: source.stunDuration || 0, sourceUnit: source }); }
+function fireExecutionerAxe(source, target) { source.isWaitingForAxe = true; const angle = Math.atan2(target.y - source.y, target.x - source.x); state.projectiles.push({ x: source.x, y: source.y, dmg: source.dmg, team: source.team, sourceKey: source.key, ownerId: source.id, isBoomerang: true, state: 'out', angle: angle, speed: 300, distanceTraveled: 0, maxDistance: UNIT_TYPES[source.key].projectileRange, hitList: [], radius: 20 }); }
+function fireHunterShot(u, target, dist) { const dx = target.x - u.x; const dy = target.y - u.y; const baseAngle = Math.atan2(dy, dx); const pelletCount = u.pelletCount || 10; const spread = 45 * (Math.PI / 180); const speed = 450; const life = (u.range + 20) / speed; for(let i=0; i<pelletCount; i++) { const angleOffset = -spread/2 + (spread * i / (pelletCount - 1)); const finalAngle = baseAngle + angleOffset; state.projectiles.push({ x: u.x, y: u.y, vx: Math.cos(finalAngle) * speed, vy: Math.sin(finalAngle) * speed, dmg: u.dmg, team: u.team, isShrapnel: true, life: life, hitIds: [], sourceUnit: u }); } spawnHitEffect(u.x, u.y, '#ffd700', 5); }
+function fireInfernoBeam(u, target) { if (u.lastTargetId !== target.id) u.dmgStage = 1; u.lastTargetId = target.id; applyDamage(target, u.dmg * u.dmgStage, u.stunDuration, u); spawnHitEffect(target.x, target.y, '#f97316', 5); if (u.dmgStage < 4) u.dmgStage = Math.min(4, u.dmgStage + 0.5); }
+function fireMagicArrow(source, target) {
+    const angle = Math.atan2(target.y - source.y, target.x - source.x);
+    const speed = 750; // Very fast projectile
+    const maxDist = UNIT_TYPES['MAGIC_ARCHER'].projectileRange;
+    const life = maxDist / speed;
+    state.projectiles.push({
+        type: 'linear_piercing',
+        x: source.x,
+        y: source.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        dmg: source.dmg,
+        team: source.team,
+        hitIds: [],
+        life: life,
+        color: '#6ee7b7', // Magic Cyan
+        width: 14, // Thickness of the beam hitbox
+        sourceUnit: source
+    });
+}
+function fireBowlerRock(source, target) {
+    const angle = Math.atan2(target.y - source.y, target.x - source.x);
+    const speed = 200; // Speed of the rolling rock
+    const maxDist = UNIT_TYPES['BOWLER'].projectileRange;
+    const life = maxDist / speed;
+
+    state.projectiles.push({
+        type: 'bowler_rock',
+        x: source.x,
+        y: source.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        dmg: source.dmg,
+        team: source.team,
+        hitIds: [],
+        life: life,
+        width: 45, // Hitbox size
+        knockback: UNIT_TYPES['BOWLER'].knockback,
+        sourceUnit: source
+    });
+}
+function fireMortarShell(source, target) {
+    state.projectiles.push({
+        type: 'spell_arc',
+        key: 'MORTAR_SHELL',
+        team: source.team,
+        startX: source.x,
+        startY: source.y,
+        targetX: target.x,
+        targetY: target.y,
+        progress: 0,
+        duration: 1.0,
+        height: 150,
+        onHit: () => {
+            doSplashDamage(target.x, target.y, source.splashRadius, source.dmg, source.team);
+            spawnHitEffect(target.x, target.y, '#555', 10);
+            state.particles.push({x: target.x, y: target.y, vx: 0, vy: 0, life: 1.0, color: 'rgba(0,0,0,0.5)', radius: 25});
+        }
+    });
+}
+
+function applyRageEffect(x, y, team, radius, duration) { state.units.filter(u => u.team === team && u.hp > 0 && !u.isPersistentSpell).forEach(u => { if (getDistance({x: x, y: y}, u) <= radius) { u.isRaged = true; u.rageTimer = duration; u.baseSpeed = u.baseSpeed || u.speed; u.baseAttackSpeed = u.baseAttackSpeed || u.attackSpeed; u.speed = u.baseSpeed * 1.35; u.attackSpeed = u.baseAttackSpeed / 1.35; if (u.spawnUnit && u.spawnInterval) { u.baseSpawnInterval = u.baseSpawnInterval || u.spawnInterval; u.spawnInterval = u.baseSpawnInterval / 1.35; } for(let i=0; i<5; i++) state.particles.push({x: u.x, y: u.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 0.5, color: '#f0abfc'}); } }); }
+function doSplashDamage(x, y, radius, dmg, attackerTeam, stunDuration = 0, sourceUnit = null) {
+  const enemies = state.units.filter(u => { if (u.team === attackerTeam) return false; if (u.isGraveyard || u.isInvisible || u.isPersistentSpell || u.isUntargetable) return false; if (sourceUnit) { if (sourceUnit.targetType === 'ground' && u.type === 'air') return false; if (sourceUnit.targetType === 'air' && u.type === 'ground') return false; } return true; });
+  const enemyTowers = state.towers.filter(t => t.team !== attackerTeam); [...enemies, ...enemyTowers].forEach(ent => { if (getDistance({x, y}, ent) <= radius) applyDamage(ent, dmg, stunDuration, sourceUnit); });
+}
+function doSplashHeal(x, y, radius, healAmount, healerTeam) { state.units.filter(u => u.team === healerTeam && u.hp > 0 && !u.isPersistentSpell && !u.isBuilding).forEach(unit => { if (getDistance({x, y}, unit) <= radius) { unit.hp = Math.min(unit.maxHp, unit.hp + healAmount); spawnHitEffect(unit.x, unit.y, '#90ee90', 5); state.particles.push({x: unit.x, y: unit.y, vx: 0, vy: 0, life: 0.5, color: 'rgba(144, 238, 144, 0.5)', radius: 20}); } }); }
+function spawnHitEffect(x, y, color = '#fff', count = 3, spread = 2) { for(let i=0; i<count; i++) state.particles.push({x: x, y: y, vx: (Math.random()-0.5)*spread, vy: (Math.random()-0.5)*spread, life: 0.3, color: color}); }
+function checkWinCondition() { const playerKing = state.towers.find(t => t.team === 'player' && t.type === 'king'); const enemyKing = state.towers.find(t => t.team === 'enemy' && t.type === 'king'); if (!playerKing) endGame('lose'); if (!enemyKing) endGame('win'); }
+
+function endGame(result) {
+    state.gameOver = true;
+    const msg = document.getElementById('message');
+    msg.style.display = 'block';
+
+    const isWin = (result === 'win');
+    msg.textContent = isWin ? "VICTORY!" : "DEFEAT!";
+    msg.style.color = isWin ? COLORS.player : COLORS.enemy;
+
+    if (loggedPlayer) {
+        // SOLO guardamos trofeos si el modo es RANKED
+        if (state.gameMode === 'ranked') {
+            window.saveGameToCloud(isWin);
+        } else {
+            // En entrenamiento solo guardamos el mazo (por si lo cambió)
+            window.saveGameToCloud(null); 
+            msg.textContent += " (PRACTICE)";
+        }
+    }
+
+    document.getElementById('play-again-btn').style.display = 'block';
+    document.getElementById('ability-btn').style.display = 'none';
+}
+
+window.resetGame = () => {
+    window.showLoading(() => {
+        document.getElementById('main-menu').style.opacity = '1';
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('main-menu').style.display = 'flex';
+        document.getElementById('bottom-nav').style.display = 'flex';
+        document.getElementById('auth-ui').style.display = 'block';
+
+        state.screen = 'menu';
+        document.getElementById('message').style.display = 'none';
+        document.getElementById('play-again-btn').style.display = 'none';
+
+        // Reset de estados
+        state.units = []; state.projectiles = []; state.particles = []; state.towers = [];
+        state.playerElixir = 5; state.selectedCard = null; state.gameOver = false;
+        state.activeChampionId = null;
+        document.getElementById('ability-btn').style.display = 'none';
+
+        renderDeckBuilder();
+        updateHandUI();
+        fetchLeaderboard();
+    });
+}
+
+// RENDERING
+function render() {
+  const ctx = state.ctx; const W = CANVAS_WIDTH; const H = CANVAS_HEIGHT;
+  ctx.clearRect(0, 0, state.canvas.width, state.canvas.height);
+  ctx.save(); ctx.scale(state.scale, state.scale);
+  const squareSize = TILE_SIZE;
+  for (let y = 0; y < H; y += squareSize) { for (let x = 0; x < W; x += squareSize) { ctx.fillStyle = (Math.floor(x / squareSize) + Math.floor(y / squareSize)) % 2 === 0 ? COLORS.grass : COLORS.grassAccent; ctx.fillRect(x, y, squareSize, squareSize); } }
+  ctx.fillStyle = COLORS.river; ctx.fillRect(0, H/2 - 30, W, 60);
+  ctx.fillStyle = COLORS.road; ctx.beginPath(); ctx.moveTo(W*0.2, H*0.1); ctx.lineTo(W*0.2, H*0.9); ctx.moveTo(W*0.8, H*0.1); ctx.lineTo(W*0.8, H*0.9); ctx.stroke();
+  ctx.fillRect(W*0.194 - 15, 59, 32, H - 118); ctx.fillRect(W*0.804 - 15, 59, 32, H - 118);
+  ctx.fillRect(W*0.2, H*0.905, W*0.6, 32); ctx.fillRect(W*0.2, H*0.09 - 26.8, W*0.6, 32);
+  ctx.fillStyle = COLORS.bridge; ctx.fillRect(W*0.2 - 20, H/2 - 30, 40, 60); ctx.fillRect(W*0.8 - 20, H/2 - 30, 40, 60);
+  ctx.fillStyle = '#5d4037'; for(let i=0; i<5; i++) { ctx.fillRect(W*0.2 - 20, H/2 - 20 + (i*10), 40, 2); ctx.fillRect(W*0.8 - 20, H/2 - 20 + (i*10), 40, 2); }
+  if (state.selectedCard) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.setLineDash([10, 10]); ctx.lineWidth = 3; ctx.beginPath();
+      let cardData = UNIT_TYPES[state.selectedCard]; if (state.selectedCard === 'MIRROR' && state.lastPlayedCard) cardData = UNIT_TYPES[state.lastPlayedCard];
+      if (cardData && cardData.type !== 'spell') {
+          const riverY = H/2 + 20; const pocketY = 330; const centerX = W/2;
+          const eLeft = state.towers.find(t => t.team === 'enemy' && t.type === 'princess' && t.x < centerX); const eRight = state.towers.find(t => t.team === 'enemy' && t.type === 'princess' && t.x > centerX);
+          let yLeft = !eLeft ? pocketY : riverY; let yRight = !eRight ? pocketY : riverY;
+          ctx.moveTo(0, yLeft); ctx.lineTo(centerX, yLeft); ctx.lineTo(centerX, yRight); ctx.lineTo(W, yRight); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      if (state.isHovering && state.hoverX !== null) { drawPreview(ctx, cardData); }
+  }
+  state.towers.forEach(t => drawTower(ctx, t));
+  state.units.sort((a, b) => a.y - b.y);
+  state.units.forEach(u => drawUnit(ctx, u));
+  state.projectiles.forEach(p => {
+      // MAGIC ARCHER ARROW RENDER
+      if (p.type === 'linear_piercing') {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          const angle = Math.atan2(p.vy, p.vx);
+          ctx.rotate(angle);
+
+          // Draw magic trail
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-20, 0); // Trail behind
+          ctx.lineTo(0, 0);
+          ctx.stroke();
+
+          // Draw Arrow Head
+          ctx.fillStyle = '#ccfbf1';
+          ctx.beginPath();
+          ctx.moveTo(5, 0);
+          ctx.lineTo(-5, -4);
+          ctx.lineTo(-5, 4);
+          ctx.fill();
+
+          // Glow effect
+          ctx.shadowBlur = 5;
+          ctx.shadowColor = p.color;
+          ctx.restore();
+      }
+      else if (p.type === 'bowler_rock') {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          // Rotation animation based on life/movement
+          const rotation = (Date.now() / 100);
+          ctx.rotate(rotation);
+
+          // Draw Rock
+          ctx.fillStyle = '#57534e'; // Dark Grey
+          ctx.beginPath();
+          ctx.arc(0, 0, 10, 0, Math.PI*2);
+          ctx.fill();
+
+          // Draw simple detail on rock to show rotation
+          ctx.fillStyle = '#a8a29e';
+          ctx.beginPath();
+          ctx.arc(4, -4, 3, 0, Math.PI*2);
+          ctx.fill();
+
+          ctx.restore();
+      }
+      else if (p.type === 'rolling') {
+          ctx.save(); ctx.translate(p.x, p.y); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-p.width/2 + 5, -p.height/2 + 5, p.width, p.height);
+          if (p.key === 'LOG') { ctx.fillStyle = '#8B4513'; ctx.fillRect(-p.width/2, -p.height/2, p.width, p.height); ctx.fillStyle = '#aaa'; for(let k=-p.width/2; k<p.width/2; k+=15) { ctx.beginPath(); ctx.moveTo(k, -p.height/2); ctx.lineTo(k+5, -p.height/2 - 5); ctx.lineTo(k+10, -p.height/2); ctx.fill(); ctx.beginPath(); ctx.moveTo(k, p.height/2); ctx.lineTo(k+5, p.height/2 + 5); ctx.lineTo(k+10, p.height/2); ctx.fill(); } } else { ctx.fillStyle = '#A0522D'; ctx.fillRect(-p.width/2, -p.height/2, p.width, p.height); ctx.fillStyle = '#555'; ctx.fillRect(-p.width/2 + 10, -p.height/2, 5, p.height); ctx.fillRect(p.width/2 - 15, -p.height/2, 5, p.height); }
+          ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2; ctx.beginPath(); const rollOffset = (p.distTraveled % 20); for (let k = -p.height/2; k < p.height/2 + 20; k += 10) { let yPos = k + rollOffset; if (yPos > -p.height/2 && yPos < p.height/2) { ctx.moveTo(-p.width/2, yPos); ctx.lineTo(p.width/2, yPos); } } ctx.stroke(); ctx.restore();
+      }
+      else if (p.type === 'spell_arc') {
+          ctx.save(); const heightOffset = Math.sin(p.progress * Math.PI) * p.height; const drawY = p.y - heightOffset; const unitData = UNIT_TYPES[p.key];
+          ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(p.x, p.y, 10 + heightOffset/10, 5 + heightOffset/20, 0, 0, Math.PI*2); ctx.fill(); ctx.translate(p.x, drawY);
+          if (unitData.projectileIcon) { ctx.font = '30px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; const angle = Math.atan2(p.targetY - p.startY, p.targetX - p.startX); ctx.rotate(angle + Math.PI/2); ctx.fillText(unitData.projectileIcon, 0, 0); if (p.key === 'ROCKET') { state.particles.push({x: p.x, y: drawY, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, life: 0.5, color: '#888'}); } } else { ctx.fillStyle = unitData.color || '#f97316'; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill(); state.particles.push({x: p.x, y: drawY, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, life: 0.3, color: unitData.color}); } ctx.restore();
+      }
+      else if (p.type === 'spell_arrow') { ctx.save(); ctx.strokeStyle = '#8b0000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - 5, p.y - 15); ctx.stroke(); ctx.restore(); }
+      else if (p.type === 'spell_delay_vis') { ctx.save(); const pct = 1 - (p.timer / p.maxTimer); ctx.strokeStyle = p.color; ctx.lineWidth = 3; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * pct, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.stroke(); ctx.restore(); }
+      else if (p.isBoomerang) { ctx.fillStyle = '#6a0dad'; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#9c27b0'; ctx.lineWidth = 2; ctx.stroke(); }
+      else if (p.isShrapnel) { ctx.fillStyle = '#ffff00'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); }
+      else if (p.type !== 'spell_timer') {
+          if (p.sourceUnit && p.sourceUnit.isRamRider) {
+              // Ram Rider Bola (Simple circle)
+              ctx.fillStyle = '#D2691E'; // Chocolate color for Bola
+              ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
+          } else {
+              ctx.fillStyle = (p.sourceUnit && p.sourceUnit.isFirecracker) ? '#e11d48' : '#fff';
+              ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+          }
+      }
+  });
+  state.particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life * 3; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius ? p.radius*p.life*2 : 3*p.life, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1.0; });
+  ctx.restore();
+}
+
+// --- DRAW PREVIEW ---
+function drawPreview(ctx, cardData) {
+    if(!cardData) return; const x = state.hoverX; const y = state.hoverY;
+    const isOverlapping = (x, y, targets, margin = 0) => targets.some(t => { if (t.hp <= 0) return false; const radius = (t.width ? t.width / 2 : 30) + margin; return Math.hypot(x - t.x, y - t.y) < radius; });
+    const getDeployY = (x, team) => { const riverY = CANVAS_HEIGHT / 1.9; const pocketY = 320; const centerX = CANVAS_WIDTH / 2; if (team === 'player') { const eLeft = state.towers.find(t => t.team === 'enemy' && t.type === 'princess' && t.x < centerX); const eRight = state.towers.find(t => t.team === 'enemy' && t.type === 'princess' && t.x > centerX); let limitY = riverY; if (!eLeft && x < centerX) limitY = pocketY; if (!eRight && x > centerX) limitY = pocketY; return limitY; } return riverY; };
+    const validMinY = getDeployY(x, 'player'); const friendlyBuildings = [...state.towers.filter(t => t.team === 'player'), ...state.units.filter(u => u.team === 'player' && u.isBuilding)]; const enemyBuildings = [...state.towers.filter(t => t.team === 'enemy'), ...state.units.filter(u => u.team === 'enemy' && u.isBuilding)];
+    let isValid = true;
+
+    // RED RIVER VISUAL CHECK
+    if (cardData.type !== 'spell') {
+        const riverTop = CANVAS_HEIGHT / 2 - 32; const riverBot = CANVAS_HEIGHT / 2 + 32;
+        if (y > riverTop && y < riverBot) isValid = false;
+    }
+
+    // --- RECRUIT SPECIFIC PREVIEW CHECK ---
+    if (cardData.isLineDeployment) {
+        const riverY = CANVAS_HEIGHT / 1.9;
+        if (y < riverY) {
+            const enemyPrincessTowers = state.towers.filter(t => t.team === 'enemy' && t.type === 'princess');
+            if (enemyPrincessTowers.length > 0) isValid = false; // Block if any princess tower lives
+        }
+    }
+
+    if (isValid) {
+        if (cardData.type === 'spell') {
+             let checkKey = state.selectedCard; if(checkKey === 'MIRROR' && state.lastPlayedCard) checkKey = state.lastPlayedCard;
+             const isGlobal = ['GRAVEYARD', 'MINER', 'GOBLIN_BARREL', 'GOBLIN_DRILL'].includes(checkKey);
+             if ((cardData.spawnUnit || cardData.spawnUnits) && !isGlobal && isOverlapping(x, y, enemyBuildings, 10)) isValid = false;
+             if (cardData.territoryRestricted && (y < validMinY || y > CANVAS_HEIGHT - 10 || isOverlapping(x, y, friendlyBuildings, 10))) isValid = false;
+        } else { if (x < 0 || x > CANVAS_WIDTH || y < validMinY || y > CANVAS_HEIGHT - 10 || isOverlapping(x, y, friendlyBuildings, 10)) {
+             // Exception for Recruits high placement
+             const enemyPrincessTowers = state.towers.filter(t => t.team === 'enemy' && t.type === 'princess');
+             const isRecruitsHigh = cardData.isLineDeployment && enemyPrincessTowers.length === 0 && y < validMinY && y > 40;
+             if (!isRecruitsHigh) isValid = false;
+        }}
+    }
+
+    ctx.fillStyle = isValid ? 'rgba(255, 255, 255, 0.2)' : 'rgba(220, 38, 38, 0.4)'; ctx.strokeStyle = isValid ? '#fff' : '#ef4444'; ctx.lineWidth = 2; ctx.fillRect(x - TILE_SIZE/2, y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE); ctx.strokeRect(x - TILE_SIZE/2, y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE);
+    if (isValid) {
+        if (cardData.isRolling) { const range = cardData.range; const width = cardData.rectWidth || 60; ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; ctx.fillRect(x - width/2, y - range, width, range); ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.strokeRect(x - width/2, y - range, width, range); }
+        else { let radius = cardData.range || cardData.radius || 0; if (radius > 5) { ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]); } }
+    }
+    let ghosts = [];
+    if (cardData.type === 'spell') {
+        if (!cardData.isGraveyard && !cardData.isRolling) {
+            if (cardData.spawnUnits) { cardData.spawnUnits.forEach((uKey, idx) => { const count = cardData.spawnUnitCounts ? cardData.spawnUnitCounts[idx] : 1; const uProto = UNIT_TYPES[uKey]; for(let i=0; i<count; i++) ghosts.push(uProto); }); }
+            else if (cardData.spawnUnit) { const count = cardData.spawnCount || 1; const uProto = UNIT_TYPES[cardData.spawnUnit]; for(let i=0; i<count; i++) ghosts.push(uProto); }
+        }
+    } else if (cardData.type === 'building') ghosts.push(cardData); else { const count = cardData.count || 1; for(let i=0; i<count; i++) ghosts.push(cardData); }
+    const offset = 20; const total = ghosts.length;
+    ghosts.forEach((ghost, i) => {
+        if (!ghost) return;
+        let finalX, finalY;
+
+        // --- ROYAL RECRUIT PREVIEW PATTERN ---
+        if (cardData.isLineDeployment && total === 6) {
+             let pattern = '3-3';
+             if (x < CANVAS_WIDTH * 0.35) pattern = '4-2';
+             else if (x > CANVAS_WIDTH * 0.65) pattern = '2-4';
+             let pcts = [];
+             if (pattern === '3-3') pcts = [1/12, 3/12, 5/12, 7/12, 9/12, 11/12];
+             else if (pattern === '4-2') pcts = [0.08, 0.20, 0.32, 0.44, 0.75, 0.88];
+             else pcts = [0.12, 0.25, 0.56, 0.68, 0.80, 0.92];
+
+             finalX = pcts[i] * CANVAS_WIDTH;
+             finalY = y;
+        } else {
+             finalX = total > 1 ? x + (i * offset) - (offset * (total-1)/2) : x;
+             finalY = y;
+        }
+
+        ctx.globalAlpha = 0.6;
+        if (ghost.type === 'building') { ctx.fillStyle = isValid ? (ghost.color || '#fff') : '#ef4444'; ctx.fillRect(finalX - 20, finalY - 20, 40, 40); }
+        else { ctx.beginPath(); ctx.arc(finalX, finalY, 15, 0, Math.PI*2); ctx.fillStyle = isValid ? (ghost.color || '#fff') : '#ef4444'; ctx.fill(); }
+        ctx.fillStyle = '#000'; ctx.font = '24px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ghost.icon, finalX, finalY);
+    }); ctx.globalAlpha = 1.0;
+}
+function drawTower(ctx, t) {
+  ctx.fillStyle = '#b3b3b3'; ctx.fillRect(t.x - t.width/2, t.y - t.height/2, t.width, t.height);
+  const turretSize = t.width * 0.6; ctx.fillStyle = t.team === 'player' ? '#4eadef' : '#b91c1c'; ctx.fillRect(t.x - turretSize/2, t.y - t.height/2 - 5, turretSize, t.height * 0.4);
+  if (t.type === 'king') {
+      ctx.fillStyle = 'gold'; ctx.beginPath(); const crownBaseY = t.y - t.height/2 - 15; ctx.moveTo(t.x - 15, crownBaseY); ctx.lineTo(t.x - 20, crownBaseY - 15); ctx.lineTo(t.x - 10, crownBaseY - 5); ctx.lineTo(t.x, crownBaseY - 20); ctx.lineTo(t.x + 10, crownBaseY - 5); ctx.lineTo(t.x + 20, crownBaseY - 15); ctx.lineTo(t.x + 15, crownBaseY); ctx.fill();
+      if(t.active) { ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(t.x, t.y + 10, 10, 0, Math.PI*2); ctx.fill(); }
+  } else { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(t.x, t.y - t.height/2 - 5, 8, 0, Math.PI*2); ctx.fill(); }
+  drawHealthBar(ctx, t.x, t.y - t.height/2 - 30, t.hp, t.maxHp, t.width * 0.8);
+}
+function drawUnit(ctx, u) {
+  if (u.state === 'deploying' || u.state === 'jumping') ctx.globalAlpha = 0.5;
+  if (u.isMegaKnight && u.state === 'jumping' && u.jumpTime > 0) ctx.globalAlpha = 1.0;
+
+  // --- GUARDIAN CHARGE VISUAL ---
+  if (u.isGuardianCharging) {
+       ctx.save();
+       ctx.shadowBlur = 10;
+       ctx.shadowColor = '#fff';
+       ctx.fillStyle = '#e5e7eb'; // Bright silver
+       // Draw slightly elongated to look fast
+       ctx.fillRect(u.x - 20, u.y - 30, 40, 60);
+       ctx.restore();
+       return; // Skip normal drawing
+  }
+
+  // --- INVISIBLE / STEALTH RENDERING ---
+  if (u.isInvisible) {
+      if (u.hideOnIdle) { // Tesla (Hidden Building)
+          // Draw trapdoor style (Just a flat rect on ground)
+          ctx.globalAlpha = 1.0;
+          ctx.fillStyle = '#444';
+          ctx.fillRect(u.x - 20, u.y - 10, 40, 20);
+          ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+          ctx.strokeRect(u.x - 20, u.y - 10, 40, 20);
+          // Draw small indicator
+          ctx.fillStyle = u.team === 'player' ? COLORS.player : COLORS.enemy;
+          ctx.fillRect(u.x - 5, u.y - 5, 10, 10);
+          return; // Skip normal drawing
+      } else {
+          // Royal Ghost (Ghostly Transparency)
+          ctx.globalAlpha = 0.4;
+      }
+  }
+
+  // --- CLONE TINT ---
+  if (u.isClone) {
+      ctx.globalAlpha = 0.7; // Clones are slightly transparent
+  }
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(u.x, u.y + 5, u.radius || 15, (u.radius || 15) * 0.5, 0, 0, Math.PI*2); ctx.fill();
+
+  let drawY = u.y;
+  if ((u.state === 'river_jumping' || u.state === 'jumping') && u.jumpHeight) drawY -= u.jumpHeight;
+
+  let wMod = 0, hMod = 0;
+  if (u.state === 'jump_charging') { wMod = 10; hMod = -10; }
+
+  // --- COLOR SELECTION ---
+  if (u.isClone) {
+      ctx.fillStyle = '#6ee7b7'; // Turquoise for Clones
+  } else if (u.isBush) {
+      // Custom Bush Drawing Logic is below, but we set color for fallbacks
+      ctx.fillStyle = u.team === 'player' ? '#22c55e' : '#15803d';
+  } else {
+      ctx.fillStyle = u.color;
+  }
+
+  if (u.isFrozen) { ctx.fillStyle = 'rgba(147, 197, 253, 0.5)'; }
+  else if (u.isSlowed) { ctx.fillStyle = 'rgba(186, 230, 253, 0.4)'; if (!u.isGraveyard && !u.isPersistentSpell) { ctx.beginPath(); ctx.arc(u.x, drawY - 5, (u.radius || 15) + 2, 0, Math.PI*2); ctx.fill(); } } // SNOW OVERLAY
+
+  if (u.isSnared) { ctx.strokeStyle = '#5D4037'; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(u.x, u.y + 5, 12, 6, 0, 0, Math.PI*2); ctx.stroke(); }
+
+  // --- DRAWING SHAPES ---
+
+  if (u.isBush) {
+      // SUSPICIOUS BUSH RENDER
+      ctx.fillStyle = u.team === 'player' ? '#22c55e' : '#15803d'; // Base Green
+      ctx.beginPath(); ctx.arc(u.x, drawY, 16, 0, Math.PI*2); ctx.fill();
+      // Leaves details
+      ctx.fillStyle = u.team === 'player' ? '#4ade80' : '#16a34a';
+      ctx.beginPath(); ctx.arc(u.x - 8, drawY - 8, 10, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(u.x + 8, drawY + 8, 10, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(u.x + 6, drawY - 8, 9, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(u.x - 6, drawY + 8, 9, 0, Math.PI*2); ctx.fill();
+  }
+  else if (u.isBuilding) { if (u.isGraveyard) { ctx.fillStyle = 'rgba(100, 100, 150, 0.4)'; ctx.fillRect(u.x - 10, drawY - 10, 20, 20); } else if (u.burrowDeploy) { ctx.beginPath(); ctx.arc(u.x, drawY, 18, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.arc(u.x, drawY, 10, 0, Math.PI*2); ctx.fill(); } else ctx.fillRect(u.x - 25, drawY - 25, 50, 50); }
+  else if (u.isPersistentSpell) { ctx.beginPath(); ctx.arc(u.x, drawY, u.radius, 0, Math.PI*2); ctx.fillStyle = u.key === 'POISON' ? 'rgba(128, 0, 128, 0.3)' : u.key === 'GOBLIN_CURSE' ? 'rgba(92, 184, 92, 0.3)' : 'rgba(139, 69, 19, 0.3)'; ctx.fill(); }
+  else if (['GOLEM','GIANT','PEKKA','ROYAL_GIANT','SPARKY','LAVA_HOUND','GOLEMITE','GOBLIN_GIANT'].includes(u.key) || u.isMegaKnight || u.isElectroGiant) { ctx.fillRect(u.x - 18 - wMod/2, drawY - 25 - hMod, 36 + wMod, 36 + hMod); }
+  else if (u.type === 'air') { ctx.beginPath(); ctx.moveTo(u.x, drawY - 20); ctx.lineTo(u.x - 15, drawY + 5); ctx.lineTo(u.x + 15, drawY + 5); ctx.fill(); }
+  else if (u.suicide) { ctx.beginPath(); ctx.moveTo(u.x, drawY-15); ctx.arc(u.x, drawY, 10, 0, Math.PI*2); ctx.fill(); }
+  else { ctx.beginPath(); ctx.arc(u.x, drawY - 5, u.radius || 15, 0, Math.PI*2); ctx.fill(); }
+
+  if (u.isGoblinGiant) {
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath(); ctx.arc(u.x - 8, drawY - 20, 5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(u.x + 8, drawY - 20, 5, 0, Math.PI*2); ctx.fill();
+  }
+
+  if (u.isInferno && u.cooldown > u.attackSpeed * 0.5 && u.target) { ctx.strokeStyle = `rgba(255, ${200 - u.dmgStage * 30}, 0, 1)`; ctx.lineWidth = 3 + u.dmgStage; ctx.beginPath(); ctx.moveTo(u.x, drawY - 5); ctx.lineTo(u.target.x, u.target.y); ctx.stroke(); }
+
+  ctx.lineWidth = 3; ctx.strokeStyle = u.team === 'player' ? COLORS.playerDark : COLORS.enemyDark;
+  if (u.isClone) ctx.strokeStyle = '#34d399'; // Clone border
+  if (u.charging) ctx.strokeStyle = '#facc15';
+  if (u.isRaged) ctx.strokeStyle = '#f0abfc';
+  if (u.isSlowed && !u.isFrozen) ctx.strokeStyle = '#7dd3fc'; // SLOW BORDER
+  ctx.stroke();
+
+  if (u.hasShield && u.shieldHp > 0) drawHealthBar(ctx, u.x, drawY - 40, u.shieldHp, u.maxShieldHp, 30, '#8e8e8e');
+
+  // --- MONK ABILITY BAR (FIX: Appears while Reflecting) ---
+  if (u.key === 'MONK' && u.isReflecting) {
+      drawHealthBar(ctx, u.x, drawY - 45, u.reflectionTimer, 4.0, 40, '#9ca3af'); // Grey Ability Timer
+  }
+
+  if (!u.isGraveyard && !u.isPersistentSpell && !u.isUntargetable) { ctx.fillStyle = '#000'; ctx.font = '16px Arial'; ctx.textAlign = 'center'; ctx.fillText(u.icon, u.x, drawY); if (u.duration !== null && u.hpDecayPerSecond !== null) drawHealthBar(ctx, u.x, drawY - 30, u.hp, u.maxHp, 30); else if (u.hp < u.maxHp || u.hp > 0) drawHealthBar(ctx, u.x, drawY - 30, u.hp, u.maxHp, 30); }
+  else if (u.key === 'GIANT_BOMB' || u.key === 'GOBLIN_CURSE') { ctx.fillStyle = '#000'; ctx.font = '16px Arial'; ctx.textAlign = 'center'; ctx.fillText(u.icon, u.x, drawY); if (u.durationTimer !== null && u.duration !== null) drawHealthBar(ctx, u.x, drawY - 30, u.durationTimer, u.duration, 30); }
+
+  // --- DRAW ACTIVE CHAMPION CROWN ---
+  if (u.id === state.activeChampionId) {
+        const crownY = drawY - 55; // Floating above HP bar
+        ctx.save();
+        ctx.fillStyle = '#ffd700'; // Gold
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+
+        // Simple Crown Shape
+        ctx.beginPath();
+        ctx.moveTo(u.x - 8, crownY);
+        ctx.lineTo(u.x - 12, crownY - 8);
+        ctx.lineTo(u.x - 6, crownY - 4);
+        ctx.lineTo(u.x, crownY - 12); // Middle spike
+        ctx.lineTo(u.x + 6, crownY - 4);
+        ctx.lineTo(u.x + 12, crownY - 8);
+        ctx.lineTo(u.x + 8, crownY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+  }
+
+  ctx.globalAlpha = 1.0;
+}
+function drawHealthBar(ctx, x, y, current, max, width, customColor = null) {
+  const h = 5; const pct = Math.max(0, current / max);
+  ctx.fillStyle = '#333'; ctx.fillRect(x - width/2, y, width, h);
+  ctx.fillStyle = customColor || (pct > 0.5 ? '#4ade80' : (pct > 0.25 ? '#facc15' : '#ef4444'));
+  ctx.fillRect(x - width/2, y, width * pct, h);
+}
+
+function getDistance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+init();
+</script>
+</body>
+</html>
