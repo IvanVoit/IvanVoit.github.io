@@ -489,34 +489,46 @@
         </div>
     </div>
 
-    <!-- AUTH BUTTON -->
-     <div id="auth-ui" style="position: fixed; top: 15px; right: 15px; z-index: 1000; display: flex; gap: 10px; align-items: center;">
+    <!-- SOCIAL BUTTONS (ARRIBA IZQUIERDA) -->
+    <div id="social-ui" style="position: fixed; top: 15px; left: 15px; z-index: 1000; display: flex; gap: 8px; align-items: center;">
         
-        <!-- TU BOTÓN DE CUENTA ORIGINAL (No toques nada de dentro, solo asegúrate que esté aquí) -->
+        <!-- BOTÓN DISCORD -->
+        <a href="https://discord.gg/jPjcZsGzXE" target="_blank" style="
+            background: #5865F2; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #404EED; cursor: pointer; transition: transform 0.1s; text-decoration: none;
+        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #404EED'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #404EED'">
+            <img src="discord_icon.png" alt="Discord" style="width: 24px; height: 24px; pointer-events: none;">
+        </a>
+
+        <!-- BOTÓN YOUTUBE -->
+        <a href="https://www.youtube.com/@clashtoplay" target="_blank" style="
+            background: #FF0000; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #CC0000; cursor: pointer; transition: transform 0.1s; text-decoration: none;
+        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #CC0000'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #CC0000'">
+            <img src="youtubeicon.png" alt="YouTube" style="width: 24px; height: 24px; pointer-events: none;">
+        </a>
+
+        <!-- BOTÓN TIKTOK -->
+        <a href="https://www.tiktok.com/@clashtoplay.com" target="_blank" style="
+            background: #000000; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #333333; cursor: pointer; transition: transform 0.1s; text-decoration: none;
+        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #333333'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #333333'">
+            <img src="tiktokicon.png" alt="TikTok" style="width: 24px; height: 24px; pointer-events: none;">
+        </a>
+
+        <!-- BOTÓN INSTAGRAM -->
+        <a href="https://www.instagram.com/clashtoplay/" target="_blank" style="
+            background: #E1306C; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #B11D4E; cursor: pointer; transition: transform 0.1s; text-decoration: none;
+        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #B11D4E'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #B11D4E'">
+            <img src="igicon.png" alt="Instagram" style="width: 24px; height: 24px; pointer-events: none;">
+        </a>
+    </div>
+
+    <!-- AUTH BUTTON (ARRIBA DERECHA) -->
+    <div id="auth-ui" style="position: fixed; top: 15px; right: 15px; z-index: 1000;">
         <button id="main-auth-btn" onclick="toggleAuthModal()" style="
-            background: #facc15; color: #1a1a1a; border: 3px solid #fff; padding: 10px 20px; border-radius: 12px; font-family: 'Luckiest Guy', cursive; font-size: 18px; cursor: pointer; box-shadow: 0 5px 0 #b45309, 0 10px 15px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; transition: transform 0.1s;
+            background: #facc15; color: #1a1a1a; border: 3px solid #fff; padding: 10px 15px; border-radius: 12px; font-family: 'Luckiest Guy', cursive; font-size: 16px; cursor: pointer; box-shadow: 0 5px 0 #b45309, 0 10px 15px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px; transition: transform 0.1s;
         " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #b45309'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #b45309'">
             <span id="btn-icon">👤</span> <span id="btn-text">MY ACCOUNT</span>
         </button>
-
-        <!-- EL NUEVO BOTÓN DE DISCORD -->
-        <a href="https://discord.gg/jPjcZsGzXE" target="_blank" style="
-            background: #5865F2; /* Color oficial Discord */
-            color: white; 
-            border: 3px solid #fff; 
-            border-radius: 12px; 
-            width: 48px; /* Cuadrado */
-            height: 48px; /* Misma altura aprox que el otro */
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 0 5px 0 #404EED; 
-            cursor: pointer; 
-            transition: transform 0.1s; 
-            text-decoration: none;
-        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #404EED'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #404EED'">
-            <img src="discord_icon.png" alt="Discord" style="width: 28px; height: 28px; pointer-events: none;">
-        </a>
+    </div>
 
     </div>
 
@@ -2710,4 +2722,3 @@ init();
 </script>
 </body>
 </html>
-
