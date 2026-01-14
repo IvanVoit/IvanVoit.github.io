@@ -130,7 +130,7 @@
       }
       .skin-card.selected .equip-badge { display: block; }
 
-      /* --- Main Menu Slider System --- */
+
       #main-menu {
           display: flex;
           overflow-x: auto;
@@ -145,7 +145,6 @@
           touch-action: pan-y;
       }
 
-      /* Cuando arrastramos, quitamos el "imán" para que no de saltos */
       #main-menu.grabbing {
           cursor: grabbing;
           scroll-snap-type: none;
@@ -156,7 +155,7 @@
 
       .menu-screen {
           flex: 0 0 100vw;
-          width: 100vw; /* Asegura que cada pestaña ocupe exactamente el ancho de pantalla */
+          width: 100vw; 
           height: 100%;
           scroll-snap-align: center;
           position: relative;
@@ -164,10 +163,8 @@
           display: flex;
           flex-direction: column;
           align-items: center;
-          overflow-y: auto; /* Permite scroll vertical dentro de la pestaña si hay muchas cartas */
+          overflow-y: auto; 
       }
-
-      /* --- Bottom Navigation --- */
       #bottom-nav {
           position: fixed;
           bottom: 0;
@@ -187,7 +184,7 @@
           color: #666;
           font-family: 'Luckiest Guy', cursive;
           letter-spacing: 1px;
-          font-size: 14px; /* Back to normal size for 3 items */
+          font-size: 14px; 
           cursor: pointer;
           display: flex;
           flex-direction: column;
@@ -196,8 +193,6 @@
       }
       .nav-btn.active { color: var(--accent); }
       .nav-icon { font-size: 24px; margin-bottom: 4px; }
-
-      /* --- TAB 1: DECK BUILDER --- */
       #tab-deck { background: #1a1a1a; }
       .builder-header {
           text-align: center;
@@ -234,15 +229,15 @@
       .deck-slot.filled { border: 2px solid #fff; background: #3b82f6; }
 
       #card-collection {
-          flex-grow: 1;
-          overflow-y: auto;
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 8px;
-          width: 100%;
-          padding-bottom: 20px;
-          scrollbar-width: none;
+        flex-grow: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding-bottom: 20px;
+        -webkit-overflow-scrolling: touch;
       }
       #card-collection::-webkit-scrollbar { display: none; }
 
@@ -318,11 +313,15 @@
       /* --- TAB 3: LEADERBOARD --- */
       #tab-social { background: #1a1a1a; }
       .leaderboard-container {
-          background: #222;
-          width: 100%; max-width: 400px;
-          border-radius: 10px;
-          padding: 10px;
-          border: 2px solid #444;
+        background: #222;
+        width: 100%; max-width: 400px;
+        border-radius: 10px;
+        padding: 10px;
+        border: 2px solid #444;
+        /* AÑADE ESTO: */
+        max-height: 60vh; 
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
       .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
       .lb-row:last-child { border-bottom: none; }
@@ -882,16 +881,34 @@ function initMenu() {
     let isDown = false;
     let startX;
     let scrollLeft;
+    let startY; // Añade esta variable al inicio de la lógica de arrastre
 
     const startDrag = (e) => {
         isDown = true;
         menu.classList.add('grabbing');
-        // Desactivamos el imán (snap) y el smooth mientras arrastras para que se sienta 1:1
         menu.style.scrollSnapType = 'none';
         menu.style.scrollBehavior = 'auto';
         
         startX = (e.pageX || e.touches[0].pageX) - menu.offsetLeft;
+        startY = (e.pageY || e.touches[0].pageY); // Guardamos la Y inicial
         scrollLeft = menu.scrollLeft;
+    };
+
+    const moveDrag = (e) => {
+        if (!isDown) return;
+
+        const x = (e.pageX || e.touches[0].pageX) - menu.offsetLeft;
+        const y = (e.pageY || e.touches[0].pageY);
+        
+        const walkX = (x - startX);
+        const walkY = (y - startY);
+
+        if (Math.abs(walkX) > Math.abs(walkY)) {
+            e.preventDefault(); 
+            menu.scrollLeft = scrollLeft - (walkX * 1.5);
+        } else {
+            isDown = false; 
+        }
     };
 
     const stopDrag = () => {
@@ -911,15 +928,6 @@ function initMenu() {
         });
     };
 
-    const moveDrag = (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = (e.pageX || e.touches[0].pageX) - menu.offsetLeft;
-        const walk = (x - startX) * 1.5;
-        menu.scrollLeft = scrollLeft - walk;
-    };
-
-    // Eventos
     menu.addEventListener('mousedown', startDrag);
     window.addEventListener('mouseup', stopDrag);
     window.addEventListener('mousemove', moveDrag);
@@ -2742,4 +2750,3 @@ init();
 </script>
 </body>
 </html>
-
