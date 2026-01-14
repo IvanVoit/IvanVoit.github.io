@@ -204,30 +204,64 @@
       #my-deck-slots {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 10px;
+          gap: 12px;
           justify-items: center;
-          margin-bottom: 20px;
-          background: #111;
-          padding: 15px;
-          border-radius: 8px;
+          margin-bottom: 10px;
+          background: #1e293b; /* Fondo azul oscuro más elegante */
+          padding: 20px;
+          border-radius: 16px;
+          border: 3px solid #334155;
           width: 100%;
-          max-width: 320px;
+          max-width: 360px; /* Un poco más ancho */
           margin-left: auto;
           margin-right: auto;
+          box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
       }
       .deck-slot {
-          width: 50px; height: 65px;
+          width: 55px; height: 72px; /* Ligeramente más grandes */
           border: 2px dashed #555;
-          border-radius: 4px;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 20px;
-          background: #333;
+          font-size: 24px;
+          background: rgba(0,0,0,0.3);
           cursor: pointer;
+          transition: transform 0.1s, border-color 0.2s;
+          position: relative;
+          color: #555;
       }
-      .deck-slot.filled { border: 2px solid #fff; background: #3b82f6; }
+      .deck-slot:hover { border-color: #777; }
+      .deck-slot.filled { 
+          border: 2px solid #fff; 
+          background: #3b82f6; 
+          color: white;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      }
+      .deck-controls {
+          display: flex;
+          gap: 15px;
+          justify-content: center;
+          margin: 10px 0 20px 0;
+          width: 100%;
+      }
 
+      .action-btn {
+          font-family: 'Luckiest Guy', cursive;
+          letter-spacing: 1px;
+          font-size: 14px; 
+          padding: 10px 20px;
+          border: none; 
+          border-radius: 12px;
+          cursor: pointer;
+          color: white;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: transform 0.1s, filter 0.2s;
+          text-transform: uppercase;
+      }
+      .action-btn:active { transform: translateY(4px); box-shadow: none !important; }
       #card-collection {
         flex-grow: 1;
         overflow-y: auto;
@@ -238,6 +272,14 @@
         width: 100%;
         padding-bottom: 20px;
         -webkit-overflow-scrolling: touch;
+      }
+      .btn-random {
+          background: #3b82f6;
+          box-shadow: 0 4px 0 #1d4ed8;
+      }
+      .btn-clear {
+          background: #ef4444;
+          box-shadow: 0 4px 0 #b91c1c;
       }
       #card-collection::-webkit-scrollbar { display: none; }
 
@@ -259,16 +301,6 @@
           border-radius: 50%; width: 16px; height: 16px; font-size: 10px;
           display: flex; align-items: center; justify-content: center;
       }
-      #random-deck-btn {
-          margin-top: 10px;
-          background: #60a5fa; color: #000;
-          font-family: 'Luckiest Guy', cursive;
-          letter-spacing: 1px;
-          font-size: 14px; padding: 8px 20px;
-          border: none; border-radius: 30px;
-          box-shadow: 0 4px 0 #3b82f6; cursor: pointer;
-      }
-
       /* --- TAB 2: HOME --- */
       #tab-home {
           background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
@@ -542,8 +574,8 @@
             <input type="password" id="user-pass" placeholder="PASSWORD" style="width:100%; margin:10px 0; padding:15px; border-radius:10px; border:3px solid #555; background:#1a1a1a; color:white; font-size:16px; text-align:center;">
             <button onclick="window.processAuth()" style="width:100%; margin-top:20px; padding:15px; background:#4ade80; color: white; border: none; border-radius: 12px; font-size:22px; cursor:pointer; box-shadow: 0 6px 0 #166534; text-shadow: 2px 2px #000;">CONFIRM!</button>
             <div style="margin-top: 20px;">
-                <span id="switch-text" style="color: #aaa; font-size: 14px; font-family: 'Roboto';">No account?</span>
-                <button onclick="window.switchMode()" style="background:none; border:none; color:#facc15; font-family:'Luckiest Guy'; cursor:pointer; font-size:14px; text-decoration: underline;">REGISTER HERE</button>
+                <span id="switch-text" style="color: #aaa; font-size: 14px; font-family: 'Roboto';">Don't have an account?</span>
+                <button id="switch-btn" onclick="window.switchMode()" style="background:none; border:none; color:#facc15; font-family:'Luckiest Guy'; cursor:pointer; font-size:14px; text-decoration: underline;">REGISTER HERE</button>
             </div>
             <button onclick="window.toggleAuthModal()" style="margin-top:20px; background:none; border:none; color:#ff4444; cursor:pointer;">CLOSE</button>
         </div>
@@ -577,9 +609,17 @@
       <div class="menu-screen" id="tab-deck">
           <div class="builder-header">
               <h1>Deck <span id="deck-count" style="font-size: 0.6em; color: #888;" >(0/8)</span></h1>
+              <div id="avg-elixir" style="font-size: 14px; color: #d946ef; margin-top:-5px;">Avg Elixir: 0.0</div>
           </div>
           <div id="my-deck-slots"></div>
-          <button id="random-deck-btn" onclick="generateRandomDeck()" >🪄 Auto-Fill</button>
+          <div class="deck-controls">
+              <button class="action-btn btn-random" onclick="generateRandomDeck()">
+                  <span>🪄</span> Auto
+              </button>
+              <button class="action-btn btn-clear" onclick="clearDeck()">
+                  <span>🗑️</span> Clear
+              </button>
+          </div>
           <div style="margin: 10px 0; font-size: 12px; color: #888;">Tap cards below to add/remove</div>
           <div id="card-collection"></div>
       </div>
@@ -686,6 +726,12 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
+window.clearDeck = () => {
+    state.userDeck = [];
+    renderDeckBuilder();
+    if(navigator.vibrate) navigator.vibrate(50);
+}
+
 // --- SUPABASE CONFIG ---
 const SUPABASE_URL = 'https://reousjjcwiiutjeyjwzi.supabase.co'
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlb3Vzampjd2lpdXRqZXlqd3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODc3NjUsImV4cCI6MjA4MzU2Mzc2NX0.iUer0BevbRlWurInoN6to-TrjhpmOdtJGYit8zjz8Oo'
@@ -725,8 +771,25 @@ window.toggleAuthModal = () => {
 };
 
 window.switchMode = () => {
+    // Cambiar modo
     authMode = (authMode === 'login') ? 'register' : 'login';
+    
+    // Actualizar título grande
     document.getElementById('modal-title').textContent = authMode.toUpperCase();
+
+    // Actualizar textos inferiores
+    const txtSpan = document.getElementById('switch-text');
+    const btnSwitch = document.getElementById('switch-btn');
+
+    if (authMode === 'register') {
+        // Estamos en modo registro -> Ofrecer ir a Login
+        txtSpan.textContent = "Have an account?";
+        btnSwitch.textContent = "LOGIN HERE";
+    } else {
+        // Estamos en modo login -> Ofrecer ir a Registro
+        txtSpan.textContent = "Don't have an account?";
+        btnSwitch.textContent = "REGISTER HERE";
+    }
 };
 
 window.processAuth = async () => {
@@ -1511,8 +1574,28 @@ window.toggleCardInDeck = (key) => {
 }
 window.removeCardFromDeck = (index) => { if (index < state.userDeck.length) { state.userDeck.splice(index, 1); renderDeckBuilder(); } }
 window.generateRandomDeck = () => {
-  state.userDeck = []; const all = Object.keys(UNIT_TYPES).filter(key => UNIT_TYPES[key].selectable !== false); const shuffled = [...all].sort(() => Math.random() - 0.5);
-  for (let i = 0; i < 8; i++) { if (shuffled.length > 0) state.userDeck.push(shuffled.shift()); else break; } renderDeckBuilder();
+    state.userDeck = [];
+    const allKeys = Object.keys(UNIT_TYPES).filter(key => 
+        UNIT_TYPES[key].selectable !== false
+    );
+    const shuffled = [...allKeys].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < shuffled.length; i++) {
+        if (state.userDeck.length >= 8) break;
+
+        const cardKey = shuffled[i];
+        const cardData = UNIT_TYPES[cardKey];
+        const isChampion = cardData.rarity === 'champion';
+        const hasChampion = state.userDeck.some(k => UNIT_TYPES[k].rarity === 'champion');
+        if (isChampion && hasChampion) {
+            continue; 
+        }
+        state.userDeck.push(cardKey);
+    }
+
+    renderDeckBuilder();
+    
+    // Feedback visual (vibración) si es móvil
+    if(navigator.vibrate) navigator.vibrate(50);
 }
 function renderDeckBuilder() {
   for(let i=0; i<8; i++) {
@@ -1522,12 +1605,20 @@ function renderDeckBuilder() {
           const rarityColor = RARITY_COLORS[u.rarity] || '#fff'; slot.style.borderColor = rarityColor; slot.style.background = `radial-gradient(circle at top left, ${rarityColor}80, transparent 70%)`;
       } else { slot.className = 'deck-slot'; slot.textContent = '+'; slot.style.borderColor = '#555'; slot.style.background = '#333'; }
   }
+  let totalCost = 0;
+  let count = 0;
+    state.userDeck.forEach(k => {
+        const cost = UNIT_TYPES[k].cost;
+        totalCost += (typeof cost === 'number' ? cost : 1.5); 
+        count++;
+    });
+  const avg = count > 0 ? (totalCost / count).toFixed(1) : "0.0";
   document.querySelectorAll('.collection-card').forEach(el => {
       const key = el.dataset.key; const u = UNIT_TYPES[key]; const rarityColor = RARITY_COLORS[u.rarity] || '#555';
       el.style.borderColor = rarityColor; el.style.background = `radial-gradient(circle at top left, ${rarityColor}60, transparent 80%)`;
       if (state.userDeck.includes(el.dataset.key)) { el.classList.add('selected'); el.style.borderColor = '#4ade80'; el.style.background = '#14532d'; } else { el.classList.remove('selected'); }
   });
-  document.getElementById('deck-count').textContent = `(${state.userDeck.length}/8)`;
+  document.getElementById('avg-elixir').textContent = `Avg Elixir: ${avg}`;
   const btn = document.getElementById('battle-btn-main');
   if(state.userDeck.length !== 8) { btn.disabled = true; btn.textContent = "FILL DECK"; } else { btn.disabled = false; btn.textContent = "RANKED (PvP)"; }
   if (loggedPlayer && state.userDeck.length === 8) window.saveGameToCloud(null);
@@ -1699,7 +1790,7 @@ function spawnUnit(key, team, x, y, immediateDeploy = false, unitCountOverride =
           isDashSeeking: false, dashSeekRange: 0,
           isGuardian: proto.isGuardian, isGuardianCharging: false, chargeDuration: 0, dmgTiers: proto.dmgTiers,
           isBandit: proto.isBandit, dashMinRange: proto.dashMinRange, dashMaxRange: proto.dashMaxRange, dashDmg: proto.dashDmg,
-          banditState: 'idle', banditDashTimer: 0, banditTargetId: null, prevX: finalX, prevY: finalY
+          banditState: 'idle', banditDashTimer: 0, banditTargetId: null, prevX: finalX, prevY: finalY, scanTimer: 0,
       };
       if (proto.type === 'building') { unit.isBuilding = true; unit.width = 50; unit.height = 50; }
       if (unit.isChampion && team === 'player') state.activeChampionId = unit.id;
@@ -2272,30 +2363,82 @@ function moveUnit(u, target, dt, moveAway = false) {
 
 // --- AI LOGIC (RIVER AVOIDANCE) ---
 function updateAI(dt) {
-    if (isPvP) return; // Si hay un humano, la IA no hace nada
+    if (isPvP) return; // Si es humano vs humano, la IA no hace nada
+    
     state.enemyNextSpawn -= dt;
     if (state.enemyNextSpawn > 0) return;
 
-    const minElixir = (state.gameMode === 'ranked') ? 6 : 3;
-    if (state.enemyElixir < minElixir) return;
-
+    // 1. Analizar el estado del campo
+    const myUnits = state.units.filter(u => u.team === 'enemy');
     const playerUnits = state.units.filter(u => u.team === 'player' && !u.isGraveyard && !u.isInvisible);
+    
+    // Detectar amenazas en mi lado (defensa)
+    const threats = playerUnits.filter(u => u.y < CANVAS_HEIGHT / 2);
+    const closestThreat = threats.sort((a,b) => a.y - b.y)[0]; // La que esté más arriba (cerca de mi torre)
+
+    // 2. Decidir qué carta jugar
+    // Filtramos cartas que podemos pagar
     let affordable = state.enemyHand.filter(k => k && UNIT_TYPES[k].cost <= state.enemyElixir);
     if (affordable.length === 0) return;
 
-    let chosenCard = affordable[0];
-    let deployX = Math.random() * CANVAS_WIDTH;
-    let deployY = 100;
+    let chosenCard = null;
+    let deployX = 0;
+    let deployY = 0;
 
+    // LÓGICA DE DEFENSA: Si hay amenazas, priorizar tropas baratas o de daño
+    if (closestThreat) {
+        // Buscar carta defensiva (no edificios caros, no hechizos de ataque a torre)
+        chosenCard = affordable.find(k => UNIT_TYPES[k].type !== 'building' && UNIT_TYPES[k].type !== 'spell');
+        if (!chosenCard) chosenCard = affordable[0]; // Si no hay nada mejor, usa lo que sea
+        
+        // Desplegar cerca de la amenaza para distraer
+        deployX = closestThreat.x;
+        deployY = closestThreat.y - 100; // Un poco por encima de la tropa enemiga
+    } 
+    // LÓGICA DE ATAQUE: Si no hay amenazas, preparar ataque
+    else {
+        // Esperar a tener bastante elixir para atacar (a menos que sea ranked difícil)
+        if (state.enemyElixir < 7 && state.gameMode !== 'ranked') return;
+
+        // Priorizar Tanques o cartas win-condition
+        chosenCard = affordable.find(k => ['GIANT', 'GOLEM', 'PEKKA', 'HOG_RIDER', 'ROYAL_GIANT'].includes(k));
+        if (!chosenCard) chosenCard = affordable[Math.floor(Math.random() * affordable.length)];
+
+        // Desplegar detrás de la torre o en el puente
+        const lane = Math.random() > 0.5 ? 150 : 390; // Carril izquierdo o derecho
+        deployX = lane;
+        
+        // Si es tanque, atrás. Si es rápido, al puente.
+        const cardData = UNIT_TYPES[chosenCard];
+        if (cardData.speed < 40) deployY = 80; // Atrás
+        else deployY = 300; // Cerca del río
+    }
+
+    // Ajustes finales de coordenadas
+    deployX = Math.max(50, Math.min(CANVAS_WIDTH - 50, deployX));
+    deployY = Math.max(50, Math.min(CANVAS_HEIGHT / 2 - 50, deployY));
+
+    // Validar hechizos (para no tirarlos a la nada)
     const cardData = UNIT_TYPES[chosenCard];
     if (cardData.type === 'spell') {
-        if (playerUnits.length > 0) spawnSpell(chosenCard, 'enemy', playerUnits[0].x, playerUnits[0].y);
+        if (playerUnits.length > 0) {
+            // Tirar a la tropa enemiga más aglomerada
+            deployX = playerUnits[0].x;
+            deployY = playerUnits[0].y;
+        } else {
+            // Si no hay tropas, tirar a la torre del jugador
+            const pTower = state.towers.find(t => t.team === 'player' && t.type !== 'king');
+            if(pTower) { deployX = pTower.x; deployY = pTower.y; }
+            else return; // No tirar hechizo si no hay objetivo
+        }
+        spawnSpell(chosenCard, 'enemy', deployX, deployY);
     } else {
         spawnUnit(chosenCard, 'enemy', deployX, deployY);
     }
 
+    // Ciclar mazo
     state.enemyElixir -= cardData.cost;
-    state.enemyNextSpawn = (state.gameMode === 'ranked' ? 0.8 : 2.0) + Math.random();
+    state.enemyNextSpawn = 2.5 + Math.random(); // Pausa entre cartas
     const idx = state.enemyHand.indexOf(chosenCard);
     state.enemyDeck.push(chosenCard);
     state.enemyHand[idx] = state.enemyDeck.shift();
