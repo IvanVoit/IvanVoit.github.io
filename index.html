@@ -769,14 +769,18 @@ function loginSuccess(data) {
     fetchLeaderboard();
 }
 
-function updateProfileUI() {
-    document.getElementById('profile-name').textContent = loggedPlayer.username.toUpperCase();
-    document.getElementById('profile-trophies').textContent = loggedPlayer.trophies;
-    document.getElementById('profile-wins').textContent = loggedPlayer.wins || 0;
+function updateProfileUI(playerData = loggedPlayer) {
+    if (!playerData) return;
+    document.getElementById('profile-name').textContent = playerData.username.toUpperCase();
+    document.getElementById('profile-trophies').textContent = playerData.trophies;
+    document.getElementById('profile-wins').textContent = playerData.wins || 0;
+    const logoutBtn = document.querySelector("#profile-view button[onclick='location.reload()']");
+    if (logoutBtn) logoutBtn.style.display = (loggedPlayer && playerData.username === loggedPlayer.username) ? 'block' : 'none';
+
     const profileDeckContainer = document.getElementById('profile-deck-display');
     profileDeckContainer.innerHTML = '';
-    if (loggedPlayer.deck && Array.isArray(loggedPlayer.deck)) {
-        loggedPlayer.deck.forEach(cardKey => {
+    if (playerData.deck && Array.isArray(playerData.deck)) {
+        playerData.deck.forEach(cardKey => {
             const cardData = UNIT_TYPES[cardKey];
             if (cardData) {
                 const miniCard = document.createElement('div');
@@ -789,21 +793,37 @@ function updateProfileUI() {
 }
 
 async function fetchLeaderboard() {
-    const { data, error } = await supabase.from('players').select('username, trophies').order('trophies', { ascending: false }).limit(10);
+    const { data, error } = await supabase.from('players').select('username, trophies').order('trophies', { ascending: false }).limit(100);
     if (error) return;
     const lbList = document.getElementById('leaderboard-list');
     lbList.innerHTML = '';
     data.forEach((player, index) => {
         const isMe = loggedPlayer && player.username === loggedPlayer.username;
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1;
-        lbList.innerHTML += `<div class="lb-row" style="${isMe ? 'background: #3b82f644;' : ''}">
+        lbList.innerHTML += `<div class="lb-row" style="cursor:pointer; ${isMe ? 'background: #3b82f644;' : ''}" onclick="window.viewOtherProfile('${player.username}')">
             <span class="lb-rank">${medal}</span>
             <span class="lb-name">${player.username.toUpperCase()}</span>
             <span class="lb-score">🏆 ${player.trophies}</span>
         </div>`;
     });
 }
+window.viewOtherProfile = async (username) => {
+    // Si es mi propio perfil, simplemente abrimos el modal normal
+    if (loggedPlayer && username === loggedPlayer.username) {
+        window.toggleAuthModal();
+        return;
+    }
 
+    const { data, error } = await supabase.from('players').select('*').eq('username', username).single();
+    if (error) return;
+    
+    // Forzamos la apertura del modal en modo perfil
+    document.getElementById('auth-modal').style.display = 'flex';
+    document.getElementById('auth-view').style.display = 'none';
+    document.getElementById('profile-view').style.display = 'block';
+    
+    updateProfileUI(data); // Pasamos los datos del jugador clickeado
+};
 window.saveGameToCloud = async (isWin) => {
     if (!loggedPlayer) return;
     const btnText = document.getElementById('btn-text'); const originalName = loggedPlayer.username.toUpperCase(); btnText.textContent = "SAVING...";
@@ -1929,7 +1949,7 @@ function updateEntities(dt) {
       if (u.isBandit && !u.isFrozen && !u.isSnared && u.state !== 'deploying') {
           if (u.banditState === 'dashing') {
               u.isUntargetable = true;
-              const target = state.units.find(e => e.id === u.banditTargetId) || state.towers.find(t => t.id === u.banditTargetId);
+              const targets = state.units.filter(u => u.team !== p.team && u.type !== 'air' && !u.isGraveyard && !u.isInvisible && !u.isUntargetable && !u.isPersistentSpell);
               if (!target || target.hp <= 0) { u.banditState = 'idle'; u.isUntargetable = false; }
               else {
                   const angle = Math.atan2(target.y - u.y, target.x - u.x);
@@ -2722,4 +2742,3 @@ init();
 </script>
 </body>
 </html>
-
