@@ -1454,10 +1454,10 @@ const UNIT_TYPES = {
   LUMBERJACK: { name: 'Lumberjack', cost: 4, hp: 1282, dmg: 256, speed: 70, range: 21, attackSpeed: 0.8, icon: '🍷', type: 'ground', count: 1, color: '#7e3009', target: 'ground', deployTime: 1, onDeathEffect: 'RAGE', baseSpeed: 70, baseAttackSpeed: 0.8, rarity: 'legendary' },
   RAM_RIDER: { name: 'Ram Rider', cost: 5, hp: 1697, dmg: 250, speed: 40, range: 20, attackSpeed: 1.8, icon: '🐏', type: 'ground', count: 1, color: '#2e2e2e', target: 'building', deployTime: 1, rarity: 'legendary', charge: true, canJumpRiver: true, isRamRider: true, riderRange: 165, riderDmg: 104, riderSnareDuration: 2.0, riderAttackSpeed: 1.1, },
   GRAVEYARD: { name: 'Graveyard', cost: 5, icon: '🪦', type: 'spell', radius: 120, target: 'any', effect: 'SPAWN', spawnUnit: 'SKELETONS', spawnInterval: 0.5, spawnCount: 1, duration: 10.0, maxSpawns: 20, isGraveyard: true, rarity: 'legendary', animType: 'cast_delay', castTime: 0.5, color: '#374151' },
-  BANDIT: { name: 'Bandit', cost: 3, hp: 780, dmg: 160, speed: 60, range: 20, attackSpeed: 1.0, icon: '🥷', type: 'ground', count: 1, color: '#2dd4bf', target: 'ground', deployTime: 1, rarity: 'legendary', isBandit: true, dashMinRange: 105, dashMaxRange: 195, dashDmg: 320 },
+  : { name: 'Bandit', cost: 3, hp: 780, dmg: 160, speed: 60, range: 20, attackSpeed: 1.0, icon: '🐸', type: 'ground', count: 1, color: '#2dd4bf', target: 'ground', deployTime: 1, rarity: 'legendary', isBandit: true, dashMinRange: 105, dashMaxRange: 195, dashDmg: 320 },
 
   // --- CHAMPIONS ---
-  BOSS_BANDIT: { name: 'Boss Bandit', cost: 6, hp: 1600, dmg: 210, speed: 65, range: 20, attackSpeed: 0.9, icon: '🕵️‍♀️', type: 'ground', count: 1, color: '#115e59', target: 'ground', deployTime: 1, rarity: 'champion', isChampion: true, isBandit: true, dashMinRange: 90, dashMaxRange: 220, dashDmg: 420, abilityCost: 1, abilityType: 'EVASIVE_DASH', abilityCooldown: 2, maxAbilityUses: 2, abilityIcon: '💨' },
+  BOSS_BANDIT: { name: 'Boss Bandit', cost: 6, hp: 1600, dmg: 210, speed: 65, range: 20, attackSpeed: 0.9, icon: '🍁', type: 'ground', count: 1, color: '#115e59', target: 'ground', deployTime: 1, rarity: 'champion', isChampion: true, isBandit: true, dashMinRange: 90, dashMaxRange: 220, dashDmg: 420, abilityCost: 1, abilityType: 'EVASIVE_DASH', abilityCooldown: 2, maxAbilityUses: 2, abilityIcon: '💨' },
   ARCHER_QUEEN: { name: 'Archer Queen', cost: 5, hp: 1000, dmg: 225, speed: 40, range: 165, attackSpeed: 1.2, icon: '💅🏻', type: 'ground', count: 1, color: '#fcd34d', target: 'any', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 1, abilityType: 'CLOAK', abilityCooldown: 12, abilityIcon: '🏹' },
   GOLDEN_KNIGHT: { name: 'Golden Knight', cost: 4, hp: 1800, dmg: 160, speed: 60, range: 20, attackSpeed: 0.9, icon: '👱🏻', type: 'ground', count: 1, color: '#fbbf24', target: 'ground', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 1, abilityType: 'DASH', abilityCooldown: 11, abilityIcon: '🔪' },
   SKELETON_KING: { name: 'Skeleton King', cost: 4, hp: 2300, dmg: 180, speed: 40, range: 25, attackSpeed: 1.4, icon: '☠︎', type: 'ground', count: 1, color: '#4b5563', target: 'ground', deployTime: 1, rarity: 'champion', isChampion: true, abilityCost: 2, abilityType: 'SOUL_SUMMON', splash: true, splashRadius: 50, abilityCooldown: 14, maxSouls: 10, abilityIcon: '💀' },
@@ -2895,5 +2895,6 @@ init();
 </script>
 </body>
 </html>
+
 
 
