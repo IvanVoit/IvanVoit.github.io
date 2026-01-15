@@ -1613,6 +1613,7 @@ function renderDeckBuilder() {
         count++;
     });
   const avg = count > 0 ? (totalCost / count).toFixed(1) : "0.0";
+  document.getElementById('deck-count').textContent = `(${state.userDeck.length}/8)`;
   document.querySelectorAll('.collection-card').forEach(el => {
       const key = el.dataset.key; const u = UNIT_TYPES[key]; const rarityColor = RARITY_COLORS[u.rarity] || '#555';
       el.style.borderColor = rarityColor; el.style.background = `radial-gradient(circle at top left, ${rarityColor}60, transparent 80%)`;
@@ -2894,3 +2895,4 @@ init();
 </script>
 </body>
 </html>
+
