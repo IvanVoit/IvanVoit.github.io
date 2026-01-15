@@ -694,10 +694,13 @@
         ">Clash To Play</span>
     </div>
       <div id="header">
-          <span class="blue" id="player-name-ui" style="font-size: 0.8rem;">YOU</span>
-          <div id="score"><span class="blue">0</span> - <span class="red">0</span></div>
-          <span class="red" style="font-size: 0.8rem;">TRAINER</span>
-      </div>
+        <span class="blue" id="player-name-ui" style="font-size: 0.8rem;">YOU</span>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+            <div id="score"><span class="blue">0</span> - <span class="red">0</span></div>
+            <div id="game-timer" style="font-size: 0.9rem; color: #fff; font-family: 'Luckiest Guy';">3:00</div>
+        </div>
+        <span class="red" style="font-size: 0.8rem;">TRAINER</span>
+     </div>
       <div id="game-container">
           <canvas id="gameCanvas"></canvas>
           <div id="ui-layer">
@@ -716,9 +719,10 @@
           </div>
 
           <div id="elixir-bar-container">
-              <div id="elixir-fill"></div>
-              <span id="elixir-text">5 / 10</span>
-          </div>
+            <div id="elixir-fill"></div>
+            <div id="multiplier-ui" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: #facc15; font-family: 'Luckiest Guy'; font-size: 12px; text-shadow: 1px 1px #000;">x1</div>
+            <span id="elixir-text">5 / 10</span>
+         </div>
           <div id="deck"></div>
       </div>
   </div>
@@ -1502,9 +1506,8 @@ const state = {
   enemyElixir: 5, enemyElixirTimer: 0, enemyNextSpawn: 2, lastPlayedCard: null,
   playerDeck: [], playerHand: [], enemyDeck: [], enemyHand: [], gameOver: false, winner: null,
   canvas: null, ctx: null, scale: 1, rect: null, lastTime: 0, activeChampionId: null,
-  gameMode: 'training', enemyName: 'TRAINER',
-  theme: ARENA_SKINS[0].colors,
-  selectedSkinId: null // Stores the user's manual selection
+  gameMode: 'training', enemyName: 'TRAINER', theme: ARENA_SKINS[0].colors, selectedSkinId: null, matchTime: 0,
+  elixirMultiplier: 1, isOvertime: false,
 };
 
 function init() {
@@ -1653,7 +1656,10 @@ function createTower(team, type, x, y, isKing = false) {
 function setupGameMatch() {
   state.units = []; state.projectiles = []; state.towers = []; state.particles = []; state.gameOver = false; state.playerElixir = 6; state.enemyElixir = 6; state.lastPlayedCard = null;
   state.playerDeck = [...state.userDeck].sort(() => Math.random() - 0.5);
-  state.playerHand = state.playerDeck.splice(0, 4);
+  state.playerHand = state.playerDeck.splice(0, 4); 
+  state.matchTime = 0;
+  state.elixirMultiplier = 1;
+  state.isOvertime = false;
 
   // --- ARENA SKIN SELECTION ---
   const currentTrophies = loggedPlayer ? loggedPlayer.trophies : 0;
@@ -1704,8 +1710,49 @@ function loop(timestamp) {
   } requestAnimationFrame(loop);
 }
 function updateElixir(dt) {
-  state.playerElixirTimer += dt; if (state.playerElixirTimer >= ELIXIR_RATE && state.playerElixir < 10) { state.playerElixir = Math.min(10, state.playerElixir + 1); state.playerElixirTimer = 0; }
-  state.enemyElixirTimer += dt; if (state.enemyElixirTimer >= ELIXIR_RATE && state.enemyElixir < 10) { state.enemyElixir = Math.min(10, state.enemyElixir + 1); state.enemyElixirTimer = 0; }
+  if (state.gameOver) return;
+  state.matchTime += dt;
+  const elapsed = state.matchTime;
+
+  // LÓGICA DE MULTIPLICADORES
+  if (elapsed < 120) state.elixirMultiplier = 1;      // Min 1 y 2
+  else if (elapsed < 180) state.elixirMultiplier = 2; // Min 3
+  else if (elapsed < 240) state.elixirMultiplier = 3; // Min 4 (OT)
+  else state.elixirMultiplier = 5;                     // Min 5 (OT)
+
+  // ACTUALIZAR UI
+  document.getElementById('multiplier-ui').textContent = 'x' + state.elixirMultiplier;
+  updateTimerUI();
+
+  // REGENERACIÓN (Multiplicada por el ratio)
+  state.playerElixirTimer += dt * state.elixirMultiplier;
+  if (state.playerElixirTimer >= ELIXIR_RATE && state.playerElixir < 10) {
+      state.playerElixir = Math.min(10, state.playerElixir + 1);
+      state.playerElixirTimer = 0;
+  }
+  state.enemyElixirTimer += dt * state.elixirMultiplier;
+  if (state.enemyElixirTimer >= ELIXIR_RATE && state.enemyElixir < 10) {
+      state.enemyElixir = Math.min(10, state.enemyElixir + 1);
+      state.enemyElixirTimer = 0;
+  }
+}
+
+function updateTimerUI() {
+    const timerEl = document.getElementById('game-timer');
+    const time = Math.floor(state.matchTime);
+    if (!state.isOvertime) {
+        const rem = Math.max(0, 180 - time);
+        const m = Math.floor(rem / 60);
+        const s = rem % 60;
+        timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        timerEl.style.color = "#fff";
+    } else {
+        const rem = Math.max(0, 300 - time);
+        const m = Math.floor(rem / 60);
+        const s = rem % 60;
+        timerEl.textContent = `OT ${m}:${s.toString().padStart(2, '0')}`;
+        timerEl.style.color = "#fca5a5";
+    }
 }
 function handleInputMove(e) {
     if (state.screen !== 'game' || !state.selectedCard) { state.isHovering = false; return; }
@@ -2545,16 +2592,62 @@ function doSplashDamage(x, y, radius, dmg, attackerTeam, stunDuration = 0, sourc
 }
 function doSplashHeal(x, y, radius, healAmount, healerTeam) { state.units.filter(u => u.team === healerTeam && u.hp > 0 && !u.isPersistentSpell && !u.isBuilding).forEach(unit => { if (getDistance({x, y}, unit) <= radius) { unit.hp = Math.min(unit.maxHp, unit.hp + healAmount); spawnHitEffect(unit.x, unit.y, '#90ee90', 5); state.particles.push({x: unit.x, y: unit.y, vx: 0, vy: 0, life: 0.5, color: 'rgba(144, 238, 144, 0.5)', radius: 20}); } }); }
 function spawnHitEffect(x, y, color = '#fff', count = 3, spread = 2) { for(let i=0; i<count; i++) state.particles.push({x: x, y: y, vx: (Math.random()-0.5)*spread, vy: (Math.random()-0.5)*spread, life: 0.3, color: color}); }
-function checkWinCondition() { const playerKing = state.towers.find(t => t.team === 'player' && t.type === 'king'); const enemyKing = state.towers.find(t => t.team === 'enemy' && t.type === 'king'); if (!playerKing) endGame('lose'); if (!enemyKing) endGame('win'); }
+function checkWinCondition() {
+    if (state.gameOver) return;
 
+    const pTowers = state.towers.filter(t => t.team === 'player');
+    const eTowers = state.towers.filter(t => t.team === 'enemy');
+    const pCrowns = 3 - eTowers.length;
+    const eCrowns = 3 - pTowers.length;
+
+    const pKing = pTowers.find(t => t.type === 'king');
+    const eKing = eTowers.find(t => t.type === 'king');
+
+    // 1. SI CAE UN REY (Siempre termina)
+    if (!pKing) return endGame('lose');
+    if (!eKing) return endGame('win');
+
+    // 2. AL MINUTO 3 (180s)
+    if (state.matchTime >= 180 && !state.isOvertime) {
+        if (pCrowns > eCrowns) return endGame('win');
+        else if (eCrowns > pCrowns) return endGame('lose');
+        else state.isOvertime = true; // Empate -> Overtime
+    }
+
+    // 3. EN MUERTE SÚBITA (Overtime)
+    if (state.isOvertime) {
+        // En cuanto alguien rompa el empate, termina
+        if (pCrowns > eCrowns) return endGame('win');
+        if (eCrowns > pCrowns) return endGame('lose');
+    }
+
+    // 4. AL MINUTO 5 (300s)
+    if (state.matchTime >= 300) {
+        if (pCrowns > eCrowns) return endGame('win');
+        else if (eCrowns > pCrowns) return endGame('lose');
+        else return endGame('tie'); // Empate final +0
+    }
+}
 function endGame(result) {
-  state.gameOver = true; const msg = document.getElementById('message'); msg.style.display = 'block';
-  const isWin = (result === 'win'); msg.textContent = isWin ? "VICTORY!" : "DEFEAT!"; msg.style.color = isWin ? COLORS.player : COLORS.enemy;
-  if (loggedPlayer) {
-      if (state.gameMode === 'ranked') window.saveGameToCloud(isWin);
-      else { window.saveGameToCloud(null); msg.textContent += " (PRACTICE)"; }
+  state.gameOver = true; 
+  const msg = document.getElementById('message'); 
+  msg.style.display = 'block';
+  
+  if (result === 'tie') {
+      msg.textContent = "DRAW!";
+      msg.style.color = "#888";
+      if (loggedPlayer) window.saveGameToCloud(null); // +0 copas
+  } else {
+      const isWin = (result === 'win'); 
+      msg.textContent = isWin ? "VICTORY!" : "DEFEAT!"; 
+      msg.style.color = isWin ? COLORS.player : COLORS.enemy;
+      if (loggedPlayer) {
+          if (state.gameMode === 'ranked') window.saveGameToCloud(isWin);
+          else { window.saveGameToCloud(null); msg.textContent += " (PRACTICE)"; }
+      }
   }
-  document.getElementById('play-again-btn').style.display = 'block'; document.getElementById('ability-btn').style.display = 'none';
+  document.getElementById('play-again-btn').style.display = 'block'; 
+  document.getElementById('ability-btn').style.display = 'none';
 }
 
 window.resetGame = () => {
