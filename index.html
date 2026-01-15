@@ -2046,24 +2046,48 @@ function updateEntities(dt) {
   if (eKings.length > 0 && ePrincess.length < 2) eKings[0].active = true;
 
   state.units.forEach(u => {
-      // BANDIT DASH LOGIC
+// BANDIT DASH LOGIC
       if (u.isBandit && !u.isFrozen && !u.isSnared && u.state !== 'deploying') {
           if (u.banditState === 'dashing') {
               u.isUntargetable = true;
-              const targets = state.units.filter(u => u.team !== p.team && u.type !== 'air' && !u.isGraveyard && !u.isInvisible && !u.isUntargetable && !u.isPersistentSpell);
-              if (!target || target.hp <= 0) { u.banditState = 'idle'; u.isUntargetable = false; }
+              
+              // FIX: Retrieve the target using the ID saved during the charging phase
+              // Check both units and towers
+              let target = state.units.find(e => e.id === u.banditTargetId) || state.towers.find(t => t.id === u.banditTargetId);
+
+              // FIX: Check if target exists using the variable we just defined
+              if (!target || target.hp <= 0) { 
+                  u.banditState = 'idle'; 
+                  u.isUntargetable = false; 
+              }
               else {
                   const angle = Math.atan2(target.y - u.y, target.x - u.x);
-                  u.x += Math.cos(angle) * 800 * dt; u.y += Math.sin(angle) * 800 * dt;
+                  // Dash speed
+                  u.x += Math.cos(angle) * 800 * dt; 
+                  u.y += Math.sin(angle) * 800 * dt;
+                  
                   state.particles.push({x: u.x, y: u.y, vx: 0, vy: 0, life: 0.1, color: '#fff', radius: u.radius});
-                  if (getDistance(u, target) < (u.radius + (target.width?target.width/2:15))) {
-                      applyDamage(target, u.dashDmg, 0, u); spawnHitEffect(target.x, target.y, '#2dd4bf', 15);
-                      u.banditState = 'idle'; u.isUntargetable = false; u.cooldown = u.attackSpeed;
-                      if (!target.isBuilding && target.type !== 'king' && target.type !== 'princess') { const pushDist = 20; target.x += Math.cos(angle) * pushDist; target.y += Math.sin(angle) * pushDist; }
+                  
+                  // Collision detection for dash impact
+                  if (getDistance(u, target) < (u.radius + (target.width ? target.width/2 : 15))) {
+                      applyDamage(target, u.dashDmg, 0, u); 
+                      spawnHitEffect(target.x, target.y, '#2dd4bf', 15);
+                      
+                      u.banditState = 'idle'; 
+                      u.isUntargetable = false; 
+                      u.cooldown = u.attackSpeed;
+                      
+                      // Pushback small units
+                      if (!target.isBuilding && target.type !== 'king' && target.type !== 'princess') { 
+                          const pushDist = 20; 
+                          target.x += Math.cos(angle) * pushDist; 
+                          target.y += Math.sin(angle) * pushDist; 
+                      }
                   }
               }
               return;
           }
+          
           if (u.banditState === 'charging') {
               u.banditDashTimer -= dt;
               u.speed = 0;
@@ -2073,14 +2097,16 @@ function updateEntities(dt) {
               }
               return;
           }
+          
           if (u.banditState === 'idle') {
-              u.isUntargetable = false; let target = findTarget(u);
+              u.isUntargetable = false; 
+              let target = findTarget(u);
               if (target) {
                   const dist = getDistance(u, target);
                   if (dist >= u.dashMinRange && dist <= u.dashMaxRange) {
                       u.banditState = 'charging';
                       u.banditDashTimer = 0.6;
-                      u.banditTargetId = target.id;
+                      u.banditTargetId = target.id; // Target ID is saved here
                       state.particles.push({x: u.x, y: u.y - 30, vx: 0, vy: -10, life: 0.6, color: '#fff', radius: 5});
                   }
               }
@@ -2895,3 +2921,4 @@ init();
 </script>
 </body>
 </html>
+
