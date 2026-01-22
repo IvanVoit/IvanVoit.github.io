@@ -671,6 +671,43 @@
 
   <!-- GAME OVERLAY -->
   <div id="game-screen">
+    <div id="game-alert-overlay" style="
+          pointer-events: none;
+          position: absolute;
+          top: 35%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.6); /* Fondo negro con opacidad */
+          padding: 20px 40px;
+          border-radius: 20px;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          opacity: 0; /* Invisible por defecto */
+          transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; /* Suavidad 0.2s */
+          z-index: 2000;
+          text-align: center;
+      ">
+          <div id="alert-main-text" style="
+              font-family: 'Luckiest Guy', cursive; 
+              color: #fff; 
+              font-size: 40px; 
+              text-shadow: 0 4px 0 #000;
+              letter-spacing: 2px;
+              white-space: nowrap;
+          "></div>
+          
+          <div id="alert-sub-text" style="
+              font-family: 'Luckiest Guy', cursive; 
+              color: #d946ef; /* Color elixir */
+              font-size: 24px; 
+              margin-top: 5px;
+              text-shadow: 0 2px 0 #000;
+              display: none;
+          "></div>
+    </div>
     <div style="
         background: #111; 
         width: 100%; 
@@ -1642,6 +1679,43 @@ function createTower(team, type, x, y, isKing = false) {
   const stats = isKing ? TOWER_STATS.KING : TOWER_STATS.PRINCESS; const size = isKing ? 120 : 90; const hitR = isKing ? 50 : 30;
   return { id: Math.random(), team, type, x, y, hp: stats.hp, maxHp: stats.hp, range: stats.range, damage: stats.dmg, attackSpeed: stats.attackSpeed, cooldown: 0, width: size, height: size, hitRadius: hitR, active: !isKing, lockedTargetId: null };
 }
+function showGameAlert(text, subtext = null, isSmall = false) {
+    const overlay = document.getElementById('game-alert-overlay');
+    const mainDiv = document.getElementById('alert-main-text');
+    const subDiv = document.getElementById('alert-sub-text');
+
+    // Configurar texto
+    mainDiv.textContent = text;
+    
+    // Configurar tamaño (pequeño para cuenta regresiva 5,4,3...)
+    if (isSmall) {
+        mainDiv.style.fontSize = "50px"; 
+        mainDiv.style.color = "#ef4444"; // Rojo para urgencia
+        overlay.style.padding = "10px 20px";
+    } else {
+        mainDiv.style.fontSize = "40px";
+        mainDiv.style.color = "#fff";
+        overlay.style.padding = "20px 40px";
+    }
+
+    // Configurar subtexto (para el elixir x2)
+    if (subtext) {
+        subDiv.textContent = subtext;
+        subDiv.style.display = 'block';
+    } else {
+        subDiv.style.display = 'none';
+    }
+
+    // Animación de Entrada (Fade In + ligero Pop)
+    overlay.style.opacity = '1';
+    overlay.style.transform = 'translate(-50%, -50%) scale(1.1)'; // Efecto pop
+
+    // Esperar 1.5 segundos y desvanecer (Fade Out)
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        overlay.style.transform = 'translate(-50%, -50%) scale(1)';
+    }, 1500);
+}
 function setupGameMatch() {
   state.units = []; state.projectiles = []; state.towers = []; state.particles = []; state.gameOver = false; state.playerElixir = 6; state.enemyElixir = 6; state.lastPlayedCard = null;
   state.playerDeck = [...state.userDeck].sort(() => Math.random() - 0.5);
@@ -1649,8 +1723,9 @@ function setupGameMatch() {
   state.matchTime = 0;
   state.elixirMultiplier = 1;
   state.isOvertime = false;
-
-  // --- ARENA SKIN SELECTION ---
+  
+  state.lastAlertSecond = -1; 
+  document.getElementById('game-alert-overlay').style.opacity = '0';
   const currentTrophies = loggedPlayer ? loggedPlayer.trophies : 0;
   // If user selected a skin, use it. If not, default to current trophy arena.
   let arena;
@@ -1728,19 +1803,49 @@ function updateElixir(dt) {
 
 function updateTimerUI() {
     const timerEl = document.getElementById('game-timer');
-    const time = Math.floor(state.matchTime);
+    const timePassed = Math.floor(state.matchTime); // Tiempo transcurrido en segundos
+    const totalMatchTime = 180; // 3 minutos normales
+    const timeLeft = totalMatchTime - timePassed; // Tiempo restante
+
+    // 1. DIBUJAR EL TEXTO DEL TIMER (Tu código original mantenido)
     if (!state.isOvertime) {
-        const rem = Math.max(0, 180 - time);
+        const rem = Math.max(0, timeLeft);
         const m = Math.floor(rem / 60);
         const s = rem % 60;
         timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
         timerEl.style.color = "#fff";
     } else {
-        const rem = Math.max(0, 300 - time);
+        const timeOT = Math.floor(state.matchTime) - 180;
+        const rem = Math.max(0, 120 - timeOT); // Digamos 2 min de OT
         const m = Math.floor(rem / 60);
         const s = rem % 60;
         timerEl.textContent = `OT ${m}:${s.toString().padStart(2, '0')}`;
         timerEl.style.color = "#fca5a5";
+    }
+
+    // Solo ejecutamos si hemos cambiado de segundo para no spamear
+    if (state.lastAlertSecond !== timePassed) {
+        state.lastAlertSecond = timePassed;
+
+        // A) 60 Segundos restantes (Minuto 2:00 de partida -> timeLeft = 60)
+        if (timeLeft === 60 && !state.isOvertime) {
+            showGameAlert("60 SECONDS LEFT", "Double Elixir (2x) Active!");
+        }
+        
+        // B) 30 Segundos restantes
+        if (timeLeft === 30 && !state.isOvertime) {
+            showGameAlert("30 SECONDS LEFT");
+        }
+
+        // C) 10 Segundos restantes
+        if (timeLeft === 10 && !state.isOvertime) {
+            showGameAlert("10 SECONDS");
+        }
+
+        // D) Cuenta regresiva 5, 4, 3, 2, 1
+        if (timeLeft <= 5 && timeLeft > 0 && !state.isOvertime) {
+            showGameAlert(timeLeft.toString(), null, true);
+        }
     }
 }
 function handleInputMove(e) {
@@ -2803,10 +2908,55 @@ function drawPreview(ctx, cardData) {
     }); ctx.globalAlpha = 1.0;
 }
 function drawTower(ctx, t) {
-  ctx.fillStyle = '#b3b3b3'; ctx.fillRect(t.x - t.width/2, t.y - t.height/2, t.width, t.height);
-  const turretSize = t.width * 0.6; ctx.fillStyle = t.team === 'player' ? '#4eadef' : '#b91c1c'; ctx.fillRect(t.x - turretSize/2, t.y - t.height/2 - 5, turretSize, t.height * 0.4);
-  if (t.type === 'king') { ctx.fillStyle = 'gold'; ctx.beginPath(); const crownBaseY = t.y - t.height/2 - 15; ctx.moveTo(t.x - 15, crownBaseY); ctx.lineTo(t.x - 20, crownBaseY - 15); ctx.lineTo(t.x - 10, crownBaseY - 5); ctx.lineTo(t.x, crownBaseY - 20); ctx.lineTo(t.x + 10, crownBaseY - 5); ctx.lineTo(t.x + 20, crownBaseY - 15); ctx.lineTo(t.x + 15, crownBaseY); ctx.fill(); if(t.active) { ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(t.x, t.y + 10, 10, 0, Math.PI*2); ctx.fill(); } } else { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(t.x, t.y - t.height/2 - 5, 8, 0, Math.PI*2); ctx.fill(); }
-  drawHealthBar(ctx, t.x, t.y - t.height/2 - 30, t.hp, t.maxHp, t.width * 0.8);
+  ctx.beginPath();
+  const visualRadius = t.width / 2;
+  ctx.arc(t.x, t.y, visualRadius, 0, Math.PI * 2);
+  ctx.fillStyle = '#b3b3b3'; 
+  ctx.fill();
+  
+  ctx.strokeStyle = '#777'; 
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const turretWidth = t.width * 0.6; 
+  const turretHeight = t.height * 0.4;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(t.x, t.y + 5, turretWidth/2, turretWidth/4, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = t.team === 'player' ? '#4eadef' : '#b91c1c'; // Azul o Rojo
+  ctx.fillRect(t.x - turretWidth/2, t.y - 20, turretWidth, turretHeight);
+  
+  ctx.strokeRect(t.x - turretWidth/2, t.y - 20, turretWidth, turretHeight);
+  if (t.type === 'king') { 
+      ctx.fillStyle = 'gold'; 
+      ctx.beginPath(); 
+      const crownBaseY = t.y - 30;
+      ctx.moveTo(t.x - 15, crownBaseY); 
+      ctx.lineTo(t.x - 20, crownBaseY - 15); 
+      ctx.lineTo(t.x - 10, crownBaseY - 5); 
+      ctx.lineTo(t.x, crownBaseY - 20); 
+      ctx.lineTo(t.x + 10, crownBaseY - 5); 
+      ctx.lineTo(t.x + 20, crownBaseY - 15); 
+      ctx.lineTo(t.x + 15, crownBaseY); 
+      ctx.fill(); 
+      ctx.stroke();
+      if(t.active) { 
+          ctx.fillStyle = '#000'; 
+          ctx.beginPath(); 
+          ctx.arc(t.x, t.y, 10, 0, Math.PI*2); 
+          ctx.fill(); 
+      } 
+  } else { 
+      ctx.fillStyle = '#fff'; 
+      ctx.beginPath(); 
+      ctx.arc(t.x, t.y - 25, 10, 0, Math.PI*2); 
+      ctx.fill(); 
+      ctx.stroke();
+  }
+
+  drawHealthBar(ctx, t.x, t.y - visualRadius - 15, t.hp, t.maxHp, t.width * 0.8);
 }
 function drawUnit(ctx, u) {
   if (u.state === 'deploying' || u.state === 'jumping') ctx.globalAlpha = 0.5; if (u.isMegaKnight && u.state === 'jumping' && u.jumpTime > 0) ctx.globalAlpha = 1.0;
