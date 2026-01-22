@@ -522,77 +522,6 @@
         </div>
     </div>
 
-    <!-- SOCIAL BUTTONS (ARRIBA IZQUIERDA) -->
-    <div id="social-ui" style="position: fixed; top: 15px; left: 15px; z-index: 1000; display: flex; gap: 8px; align-items: center;">
-        
-        <!-- BOTÓN DISCORD -->
-        <a href="https://discord.gg/jPjcZsGzXE" target="_blank" style="
-            background: #7289da; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #404EED; cursor: pointer; transition: transform 0.1s; text-decoration: none;
-        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #404EED'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #404EED'">
-            <img src="discord_icon.png" alt="Discord" style="width: 24px; height: 24px; pointer-events: none;">
-        </a>
-
-        <!-- BOTÓN YOUTUBE -->
-        <a href="https://www.youtube.com/@clashtoplay" target="_blank" style="
-            background: #CCCCCC; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #888888; cursor: pointer; transition: transform 0.1s; text-decoration: none;
-        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #CC0000'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #CC0000'">
-            <img src="youtubeicon.png" alt="YouTube" style="width: 24px; height: 24px; pointer-events: none;">
-        </a>
-
-        <!-- BOTÓN TIKTOK -->
-        <a href="https://www.tiktok.com/@clashtoplay.com" target="_blank" style="
-            background: #000000; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #333333; cursor: pointer; transition: transform 0.1s; text-decoration: none;
-        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #333333'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #333333'">
-            <img src="tiktokicon.png" alt="TikTok" style="width: 24px; height: 24px; pointer-events: none;">
-        </a>
-
-        <!-- BOTÓN INSTAGRAM -->
-        <a href="https://www.instagram.com/clashtoplay/" target="_blank" style="
-            background: #7F00FF; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #FF00FF; cursor: pointer; transition: transform 0.1s; text-decoration: none;
-        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #B11D4E'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #B11D4E'">
-            <img src="igicon.png" alt="Instagram" style="width: 24px; height: 24px; pointer-events: none;">
-        </a>
-    </div>
-    <a href="https://www.paypal.com/donate/?hosted_button_id=9Q85J8KZFTHEW" target="_blank" id="donate-btn" style="
-        position: fixed; 
-        top: 70px; 
-        left: 15px; 
-        z-index: 1000;
-        background: #0070ba; /* PayPal Blue */
-        border: 3px solid #fff; 
-        border-radius: 12px; 
-        height: 44px; 
-        padding: 0 15px;
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        gap: 8px;
-        box-shadow: 0 5px 0 #003087; 
-        cursor: pointer; 
-        text-decoration: none;
-        color: white;
-        font-family: 'Luckiest Guy', cursive;
-        letter-spacing: 1px;
-        transition: transform 0.1s;
-    " 
-    onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #003087'" 
-    onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #003087'"
-    onmouseleave="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #003087'">
-        <span style="font-size: 20px;">💝</span> 
-        <span style="font-size: 14px;">DONATE</span>
-    </a>
-
-    <!-- AUTH BUTTON (ARRIBA DERECHA) -->
-    <div id="auth-ui" style="position: fixed; top: 15px; right: 15px; z-index: 1000;">
-        <button id="main-auth-btn" onclick="toggleAuthModal()" style="
-            background: #facc15; color: #1a1a1a; border: 3px solid #fff; padding: 10px 15px; border-radius: 12px; font-family: 'Luckiest Guy', cursive; font-size: 16px; cursor: pointer; box-shadow: 0 5px 0 #b45309, 0 10px 15px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px; transition: transform 0.1s;
-        " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #b45309'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #b45309'">
-            <span id="btn-icon">👤</span> <span id="btn-text">ACCOUNT</span>
-        </button>
-    </div>
-
-    </div>
-
     <!-- AUTH MODAL -->
     <div id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center; font-family: 'Luckiest Guy', cursive;">
         <!-- LOGIN/REGISTER -->
@@ -655,7 +584,43 @@
       </div>
 
       <div class="menu-screen" id="tab-home">
-          <div class="builder-header" style="margin-top: 40px;">
+        <!-- 1. ACCOUNT BUTTON (Moved here, changed to absolute) -->
+          <div id="auth-ui" style="position: absolute; top: 15px; right: 15px; z-index: 10;">
+              <button id="main-auth-btn" onclick="toggleAuthModal()" style="
+                  background: #facc15; color: #1a1a1a; border: 3px solid #fff; padding: 10px 15px; border-radius: 12px; font-family: 'Luckiest Guy', cursive; font-size: 16px; cursor: pointer; box-shadow: 0 5px 0 #b45309, 0 10px 15px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px; transition: transform 0.1s;
+              " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #b45309'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #b45309'">
+                  <span id="btn-icon">👤</span> <span id="btn-text">ACCOUNT</span>
+              </button>
+          </div>
+
+          <!-- 2. SOCIAL ICONS (Moved here, changed to absolute) -->
+          <div id="social-ui" style="position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; gap: 8px; align-items: center;">
+              <!-- Discord -->
+              <a href="https://discord.gg/jPjcZsGzXE" target="_blank" style="background: #7289da; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #404EED; cursor: pointer; transition: transform 0.1s; text-decoration: none;" onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #404EED'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #404EED'">
+                  <img src="discord_icon.png" alt="Discord" style="width: 24px; height: 24px; pointer-events: none;">
+              </a>
+              <!-- YouTube -->
+              <a href="https://www.youtube.com/@clashtoplay" target="_blank" style="background: #CCCCCC; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #888888; cursor: pointer; transition: transform 0.1s; text-decoration: none;" onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #CC0000'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #CC0000'">
+                  <img src="youtubeicon.png" alt="YouTube" style="width: 24px; height: 24px; pointer-events: none;">
+              </a>
+              <!-- TikTok -->
+              <a href="https://www.tiktok.com/@clashtoplay.com" target="_blank" style="background: #000000; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #333333; cursor: pointer; transition: transform 0.1s; text-decoration: none;" onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #333333'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #333333'">
+                  <img src="tiktokicon.png" alt="TikTok" style="width: 24px; height: 24px; pointer-events: none;">
+              </a>
+              <!-- Instagram -->
+              <a href="https://www.instagram.com/clashtoplay/" target="_blank" style="background: #7F00FF; border: 3px solid #fff; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #FF00FF; cursor: pointer; transition: transform 0.1s; text-decoration: none;" onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #B11D4E'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #B11D4E'">
+                  <img src="igicon.png" alt="Instagram" style="width: 24px; height: 24px; pointer-events: none;">
+              </a>
+          </div>
+
+          <!-- 3. DONATE BUTTON (Moved here, changed to absolute) -->
+          <a href="https://www.paypal.com/donate/?hosted_button_id=9Q85J8KZFTHEW" target="_blank" id="donate-btn" style="
+            position: absolute; top: 70px; left: 15px; z-index: 10;
+            background: #0070ba; border: 3px solid #fff; border-radius: 12px; height: 44px; padding: 0 15px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 5px 0 #003087; cursor: pointer; text-decoration: none; color: white; font-family: 'Luckiest Guy', cursive; letter-spacing: 1px; transition: transform 0.1s;
+          " onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #003087'" onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #003087'" onmouseleave="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #003087'">
+              <span style="font-size: 20px;">💝</span> <span style="font-size: 14px;">DONATE</span>
+          </a>
+          <div class="builder-header" style="margin-top: 100px;">
               <h1>Clash To Play</h1>
           </div>
           <div class="rank-display" onclick="openTrophyRoad()">
@@ -950,22 +915,18 @@ function initMenu() {
     const menu = document.getElementById('main-menu');
     const navBtns = document.querySelectorAll('.nav-btn');
 
-    // 1. Posición inicial INSTANTÁNEA (Sin animación)
+    // 1. Initial Position (Instant)
     menu.scrollLeft = window.innerWidth;
 
-    // 2. Esperamos un instante minúsculo para activar la suavidad y mostrarlo
+    // 2. Enable smooth scrolling after a moment
     setTimeout(() => {
-        // Activamos el scroll suave ahora que ya estamos en posición
         menu.style.scrollBehavior = 'smooth';
-        // Hacemos aparecer el menú suavemente
         menu.style.opacity = '1';
     }, 100);
 
-    // Sincronizar botones del bottom nav al hacer scroll
+    // Sync Bottom Nav buttons
     menu.addEventListener('scroll', () => {
-        // Corrección para evitar errores si el ancho es 0
         if (window.innerWidth === 0) return;
-        
         const index = Math.round(menu.scrollLeft / window.innerWidth);
         navBtns.forEach((b, i) => {
             if(i === index) b.classList.add('active');
@@ -973,39 +934,29 @@ function initMenu() {
         });
     });
 
-    // --- Lógica de Arrastre (Mouse y Touch) ---
-    // (Esta parte es idéntica a tu código original para no romper el tacto)
+    // --- SMOOTHER DRAG LOGIC ---
     let isDown = false;
     let startX;
     let scrollLeft;
-    let startY; // Añade esta variable al inicio de la lógica de arrastre
 
     const startDrag = (e) => {
         isDown = true;
         menu.classList.add('grabbing');
+        
+        // DISABLE smooth/snap while dragging for 1:1 movement
         menu.style.scrollSnapType = 'none';
         menu.style.scrollBehavior = 'auto';
         
         startX = (e.pageX || e.touches[0].pageX) - menu.offsetLeft;
-        startY = (e.pageY || e.touches[0].pageY); // Guardamos la Y inicial
         scrollLeft = menu.scrollLeft;
     };
 
     const moveDrag = (e) => {
         if (!isDown) return;
-
+        e.preventDefault(); 
         const x = (e.pageX || e.touches[0].pageX) - menu.offsetLeft;
-        const y = (e.pageY || e.touches[0].pageY);
-        
-        const walkX = (x - startX);
-        const walkY = (y - startY);
-
-        if (Math.abs(walkX) > Math.abs(walkY)) {
-            e.preventDefault(); 
-            menu.scrollLeft = scrollLeft - (walkX * 1.5);
-        } else {
-            isDown = false; 
-        }
+        const walk = (x - startX) * 1.5; // Drag speed multiplier
+        menu.scrollLeft = scrollLeft - walk;
     };
 
     const stopDrag = () => {
@@ -1013,21 +964,28 @@ function initMenu() {
         isDown = false;
         menu.classList.remove('grabbing');
         
-        // Reactivamos el imán y el smooth al soltar
+        // 1. Re-enable Snap
         menu.style.scrollSnapType = 'x mandatory';
+        
+        // 2. FORCE SMOOTH BEHAVIOR NOW
         menu.style.scrollBehavior = 'smooth';
 
-        // Calculamos a qué pestaña ir
-        const targetIndex = Math.round(menu.scrollLeft / window.innerWidth);
+        // 3. Calculate nearest page
+        const pageIndex = Math.round(menu.scrollLeft / window.innerWidth);
+        
+        // 4. Smoothly scroll to that page
         menu.scrollTo({
-            left: targetIndex * window.innerWidth,
+            left: pageIndex * window.innerWidth,
             behavior: 'smooth'
         });
     };
 
+    // Events
     menu.addEventListener('mousedown', startDrag);
     window.addEventListener('mouseup', stopDrag);
     window.addEventListener('mousemove', moveDrag);
+    
+    // Touch Events
     menu.addEventListener('touchstart', startDrag, { passive: true });
     window.addEventListener('touchend', stopDrag);
     window.addEventListener('touchmove', moveDrag, { passive: false });
