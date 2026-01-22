@@ -553,6 +553,34 @@
             <img src="igicon.png" alt="Instagram" style="width: 24px; height: 24px; pointer-events: none;">
         </a>
     </div>
+    <a href="https://www.paypal.com/donate/?hosted_button_id=9Q85J8KZFTHEW" target="_blank" id="donate-btn" style="
+        position: fixed; 
+        top: 70px; 
+        left: 15px; 
+        z-index: 1000;
+        background: #0070ba; /* PayPal Blue */
+        border: 3px solid #fff; 
+        border-radius: 12px; 
+        height: 44px; 
+        padding: 0 15px;
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        gap: 8px;
+        box-shadow: 0 5px 0 #003087; 
+        cursor: pointer; 
+        text-decoration: none;
+        color: white;
+        font-family: 'Luckiest Guy', cursive;
+        letter-spacing: 1px;
+        transition: transform 0.1s;
+    " 
+    onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 1px 0 #003087'" 
+    onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #003087'"
+    onmouseleave="this.style.transform='translateY(0px)'; this.style.boxShadow='0 5px 0 #003087'">
+        <span style="font-size: 20px;">💝</span> 
+        <span style="font-size: 14px;">DONATE</span>
+    </a>
 
     <!-- AUTH BUTTON (ARRIBA DERECHA) -->
     <div id="auth-ui" style="position: fixed; top: 15px; right: 15px; z-index: 1000;">
@@ -1636,6 +1664,7 @@ function startGame() {
     document.getElementById('game-screen').style.display = 'flex';
     document.getElementById('auth-ui').style.display = 'none';
     document.getElementById('social-ui').style.display = 'none';
+    document.getElementById('donate-btn').style.display = 'none'; 
     const playerName = loggedPlayer ? loggedPlayer.username.toUpperCase() : "YOU";
     document.getElementById('player-name-ui').textContent = playerName;
     const redElements = document.querySelectorAll('#header .red');
@@ -2654,8 +2683,15 @@ function endGame(result) {
 
 window.resetGame = () => {
     window.showLoading(() => {
-        document.getElementById('main-menu').style.opacity = '1'; document.getElementById('game-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; document.getElementById('bottom-nav').style.display = 'flex'; document.getElementById('auth-ui').style.display = 'block'; document.getElementById('social-ui').style.display = 'flex';
-        state.screen = 'menu'; document.getElementById('message').style.display = 'none'; document.getElementById('play-again-btn').style.display = 'none';
+        document.getElementById('main-menu').style.opacity = '1'; 
+        document.getElementById('game-screen').style.display = 'none'; 
+        document.getElementById('main-menu').style.display = 'flex'; 
+        document.getElementById('bottom-nav').style.display = 'flex'; 
+        document.getElementById('auth-ui').style.display = 'block'; 
+        document.getElementById('social-ui').style.display = 'flex'; 
+        document.getElementById('donate-btn').style.display = 'flex';
+        state.screen = 'menu'; document.getElementById('message').style.display = 'none'; 
+        document.getElementById('play-again-btn').style.display = 'none';
         state.units = []; state.projectiles = []; state.particles = []; state.towers = []; state.playerElixir = 5; state.selectedCard = null; state.gameOver = false; state.activeChampionId = null; document.getElementById('ability-btn').style.display = 'none';
         renderDeckBuilder(); updateHandUI(); fetchLeaderboard(); renderSkinsMenu();
     });
@@ -3016,5 +3052,3 @@ init();
 </script>
 </body>
 </html>
-
-
