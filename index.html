@@ -1,3 +1,4 @@
+
 <html lang="en">
 <head>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3140895611585170"
@@ -136,7 +137,8 @@
       #main-menu {
           display: flex;
           overflow-x: auto;
-          scroll-snap-type: x mandatory;
+          /* Quitamos el snap nativo para que no pelee con nuestro JS */
+          scroll-snap-type: none; 
           height: 100%;
           width: 100%;
           scrollbar-width: none;
@@ -144,13 +146,7 @@
           cursor: grab;
           opacity: 0; 
           transition: opacity 0.5s ease-out;
-          touch-action: pan-y;
-      }
-
-      #main-menu.grabbing {
-          cursor: grabbing;
-          scroll-snap-type: none;
-          scroll-behavior: auto;
+          touch-action: pan-y; 
       }
 
       #main-menu::-webkit-scrollbar { display: none; }
@@ -159,14 +155,17 @@
           flex: 0 0 100vw;
           width: 100vw; 
           height: 100%;
-          scroll-snap-align: center;
           position: relative;
           padding: 20px 10px 80px 10px;
           display: flex;
           flex-direction: column;
           align-items: center;
+          
+          /* ESTO HABILITA EL SCROLL VERTICAL DENTRO DE CADA PANTALLA */
           overflow-y: auto; 
+          -webkit-overflow-scrolling: touch;
       }
+      .menu-screen::-webkit-scrollbar { display: none; }
       #bottom-nav {
           position: fixed;
           bottom: 0;
@@ -352,10 +351,14 @@
         border-radius: 10px;
         padding: 10px;
         border: 2px solid #444;
-        /* AÑADE ESTO: */
         max-height: 60vh; 
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .leaderboard-container::-webkit-scrollbar { 
+          display: none; 
       }
       .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
       .lb-row:last-child { border-bottom: none; }
@@ -947,21 +950,20 @@ window.saveGameToCloud = async (isWin) => {
 };
 
 // --- SCROLL MENU LOGIC ---
-// --- SCROLL MENU LOGIC ---
 function initMenu() {
     const menu = document.getElementById('main-menu');
     const navBtns = document.querySelectorAll('.nav-btn');
 
-    // 1. Initial Position (Instant)
+    // Posición inicial
     menu.scrollLeft = window.innerWidth;
 
-    // 2. Enable smooth scrolling after a moment
+    // Activar suavidad
     setTimeout(() => {
         menu.style.scrollBehavior = 'smooth';
         menu.style.opacity = '1';
     }, 100);
 
-    // Sync Bottom Nav buttons
+    // Sincronizar botones de abajo
     menu.addEventListener('scroll', () => {
         if (window.innerWidth === 0) return;
         const index = Math.round(menu.scrollLeft / window.innerWidth);
@@ -971,61 +973,111 @@ function initMenu() {
         });
     });
 
-    // --- SMOOTHER DRAG LOGIC ---
+    // --- VARIABLES DE ARRASTRE ---
     let isDown = false;
-    let startX;
+    let startX, startY;
     let scrollLeft;
+    let directionLocked = false; // ¿Hemos decidido ya la dirección?
+    let isHorizontal = false;    // ¿Es un swipe lateral?
 
-    const startDrag = (e) => {
-        isDown = true;
-        menu.classList.add('grabbing');
+    // --- EMPEZAR EL TOQUE/CLIC ---
+    const start = (e) => {
+        // Si es ratón y no es botón izquierdo, ignorar
+        if (e.type === 'mousedown' && e.button !== 0) return;
+
+        // NO bloquear botones ni cartas inmediatamente. 
+        // Esperaremos a ver si el usuario mueve el dedo.
         
-        // DISABLE smooth/snap while dragging for 1:1 movement
+        isDown = true;
+        directionLocked = false;
+        isHorizontal = false;
+        
+        // Coordenadas unificadas
+        const pageX = e.pageX || e.touches[0].pageX;
+        const pageY = e.pageY || e.touches[0].pageY;
+        
+        startX = pageX;
+        startY = pageY;
+        scrollLeft = menu.scrollLeft;
+        
+        // Quitamos "snap" momentáneamente para arrastrar fluido
         menu.style.scrollSnapType = 'none';
         menu.style.scrollBehavior = 'auto';
+    };
+
+    // --- MOVER EL DEDO/RATÓN ---
+    const move = (e) => {
+        if (!isDown) return;
+
+        const pageX = e.pageX || e.touches[0].pageX;
+        const pageY = e.pageY || e.touches[0].pageY;
         
-        startX = (e.pageX || e.touches[0].pageX) - menu.offsetLeft;
-        scrollLeft = menu.scrollLeft;
+        const diffX = Math.abs(pageX - startX);
+        const diffY = Math.abs(pageY - startY);
+
+        // 1. FASE DE DECISIÓN (Umbral 10px)
+        if (!directionLocked) {
+            if (diffX < 10 && diffY < 10) return; // Movimiento muy pequeño, no hacemos nada
+
+            directionLocked = true;
+
+            if (diffX > diffY) {
+                // Movimiento Horizontal predominante -> ACTIVAMOS SWIPE
+                isHorizontal = true;
+                menu.classList.add('grabbing');
+            } else {
+                // Movimiento Vertical predominante -> CANCELAMOS SWIPE
+                // Devolvemos el control al navegador para que haga scroll vertical
+                isHorizontal = false;
+                isDown = false; // Dejamos de trackear este evento
+                menu.style.scrollSnapType = 'x mandatory'; 
+                menu.style.scrollBehavior = 'smooth';
+                return;
+            }
+        }
+
+        // 2. FASE DE EJECUCIÓN (Solo si es Horizontal)
+        if (isHorizontal) {
+            // Bloqueamos el comportamiento nativo (evitar ir atrás en historial, etc)
+            if(e.cancelable) e.preventDefault();
+            
+            const x = pageX - menu.offsetLeft;
+            // startX es relativo a la página, necesitamos ajustarlo
+            const walk = (pageX - startX) * 1.5; 
+            menu.scrollLeft = scrollLeft - walk;
+        }
     };
 
-    const moveDrag = (e) => {
-        if (!isDown) return;
-        e.preventDefault(); 
-        const x = (e.pageX || e.touches[0].pageX) - menu.offsetLeft;
-        const walk = (x - startX) * 1.5; // Drag speed multiplier
-        menu.scrollLeft = scrollLeft - walk;
-    };
-
-    const stopDrag = () => {
-        if (!isDown) return;
+    // --- SOLTAR ---
+    const end = () => {
         isDown = false;
         menu.classList.remove('grabbing');
         
-        // 1. Re-enable Snap
+        // Restaurar "imán" y suavidad
         menu.style.scrollSnapType = 'x mandatory';
-        
-        // 2. FORCE SMOOTH BEHAVIOR NOW
         menu.style.scrollBehavior = 'smooth';
 
-        // 3. Calculate nearest page
-        const pageIndex = Math.round(menu.scrollLeft / window.innerWidth);
-        
-        // 4. Smoothly scroll to that page
-        menu.scrollTo({
-            left: pageIndex * window.innerWidth,
-            behavior: 'smooth'
-        });
+        if (isHorizontal) {
+            // Ajustar a la pestaña más cercana
+            const pageIndex = Math.round(menu.scrollLeft / window.innerWidth);
+            menu.scrollTo({
+                left: pageIndex * window.innerWidth,
+                behavior: 'smooth'
+            });
+        }
     };
 
-    // Events
-    menu.addEventListener('mousedown', startDrag);
-    window.addEventListener('mouseup', stopDrag);
-    window.addEventListener('mousemove', moveDrag);
+    // --- LISTENERS ---
     
-    // Touch Events
-    menu.addEventListener('touchstart', startDrag, { passive: true });
-    window.addEventListener('touchend', stopDrag);
-    window.addEventListener('touchmove', moveDrag, { passive: false });
+    // Mouse
+    menu.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+
+    // Touch (passive: false es OBLIGATORIO para e.preventDefault)
+    menu.addEventListener('touchstart', start, { passive: false });
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', end);
 }
 window.scrollToTab = (index) => {
     const menu = document.getElementById('main-menu');
@@ -3198,4 +3250,3 @@ init();
 </script>
 </body>
 </html>
-
