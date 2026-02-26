@@ -1,4 +1,3 @@
-
 <html lang="en">
 <head>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3140895611585170"
@@ -1132,33 +1131,35 @@ window.openTrophyRoad = () => {
     document.getElementById('trophy-road-overlay').style.display = 'flex';
     const container = document.getElementById('trophy-scroller');
     const progressLine = document.getElementById('road-progress');
+    const bgLine = document.querySelector('.road-line-bg');
+
+    // 1. CONFIGURATION
+    const spacing = 350;        // Distance in pixels between each arena
+    const startPadding = 150;   // Initial padding on the left
+    
+    // Calculate total width based on number of arenas
+    const totalRoadWidth = startPadding + (ARENA_SKINS.length * spacing) + 300;
+    bgLine.style.width = totalRoadWidth + 'px';
 
     // Clear old items (except line bg and progress)
     const oldArenas = container.querySelectorAll('.road-arena');
     oldArenas.forEach(el => el.remove());
 
     const currentTrophies = loggedPlayer ? loggedPlayer.trophies : 0;
-    const maxTrophies = 4000;
 
-    // 1. Calculate Line Progress
-    // We assume 5000px width total for the road line visualization
-    const totalRoadWidth = 5000;
-    const progressPx = Math.min(totalRoadWidth, (currentTrophies / maxTrophies) * totalRoadWidth);
-
-    // Animate Line
-    setTimeout(() => { progressLine.style.width = progressPx + 'px'; }, 100);
-
-    // 2. Render Checkpoints
-    ARENA_SKINS.forEach(arena => {
+    // 2. RENDER EQUIDISTANT ARENAS
+    ARENA_SKINS.forEach((arena, index) => {
         const isUnlocked = currentTrophies >= arena.min;
-        const positionX = (arena.min / maxTrophies) * totalRoadWidth;
+        
+        // VISUAL POSITION: Index * Spacing
+        const positionX = startPadding + (index * spacing);
 
         const el = document.createElement('div');
         el.className = `road-arena ${isUnlocked ? 'unlocked' : ''}`;
         el.style.position = 'absolute';
         el.style.left = positionX + 'px';
         el.style.top = '50%';
-        el.style.transform = 'translateY(-50%)'; // Vertically center on line
+        el.style.transform = 'translateY(-50%)'; 
 
         el.innerHTML = `
             <div class="road-arena-icon">${arena.icon}</div>
@@ -1168,69 +1169,54 @@ window.openTrophyRoad = () => {
         container.appendChild(el);
     });
 
-    // Scroll to current progress
+    // 3. CALCULATE PROGRESS BAR WIDTH (INTERPOLATION)
+    let progressPx = 0;
+    
+    // Find the highest arena index we have passed or met
+    let currentArenaIndex = -1;
+    for(let i = 0; i < ARENA_SKINS.length; i++) {
+        if (currentTrophies >= ARENA_SKINS[i].min) {
+            currentArenaIndex = i;
+        } else {
+            break; 
+        }
+    }
+
+    if (currentArenaIndex === -1) {
+        // Less than the first arena (rare case if first is 0)
+        progressPx = 0;
+    } 
+    else if (currentArenaIndex === ARENA_SKINS.length - 1) {
+        // Player is past the last arena
+        // Fill up to the last icon + a little extra
+        progressPx = startPadding + (currentArenaIndex * spacing) + 100;
+    } 
+    else {
+        // Player is between [currentArenaIndex] and [currentArenaIndex + 1]
+        const prevArena = ARENA_SKINS[currentArenaIndex];
+        const nextArena = ARENA_SKINS[currentArenaIndex + 1];
+        
+        // The visual X start of this segment
+        const segmentStartX = startPadding + (currentArenaIndex * spacing);
+        
+        // Calculate ratio: (MyTrophies - Prev) / (Next - Prev)
+        const trophyRange = nextArena.min - prevArena.min;
+        const trophyProgress = currentTrophies - prevArena.min;
+        
+        // Value between 0.0 and 1.0
+        const ratio = Math.max(0, Math.min(1, trophyProgress / trophyRange)); 
+        
+        // Add ratio * spacing to the start X
+        progressPx = segmentStartX + (ratio * spacing);
+    }
+
+    // Animate Line
+    setTimeout(() => { progressLine.style.width = progressPx + 'px'; }, 100);
+
+    // Scroll to current progress (centered)
     setTimeout(() => {
         container.scrollLeft = progressPx - window.innerWidth/2;
     }, 200);
-}
-
-window.closeTrophyRoad = () => {
-    document.getElementById('trophy-road-overlay').style.display = 'none';
-    document.getElementById('road-progress').style.width = '0px'; // Reset for anim next time
-}
-
-// --- SKINS MENU LOGIC ---
-window.openSkinsMenu = () => {
-    document.getElementById('skins-overlay').style.display = 'flex';
-    renderSkinsMenu();
-}
-
-window.closeSkinsMenu = () => {
-    document.getElementById('skins-overlay').style.display = 'none';
-}
-
-window.equipSkin = (skinId) => {
-    state.selectedSkinId = skinId;
-    renderSkinsMenu();
-}
-
-window.renderSkinsMenu = () => {
-    const grid = document.getElementById('skins-grid');
-    grid.innerHTML = '';
-
-    const currentTrophies = loggedPlayer ? loggedPlayer.trophies : 0;
-
-    ARENA_SKINS.forEach(skin => {
-        const isUnlocked = currentTrophies >= skin.min;
-        const isEquipped = state.selectedSkinId === skin.id || (!state.selectedSkinId && getArenaByTrophies(currentTrophies).id === skin.id);
-
-        const el = document.createElement('div');
-        el.className = `skin-card ${isUnlocked ? '' : 'locked'} ${isEquipped ? 'selected' : ''}`;
-
-        // CSS Preview of the map colors
-        const preview = `
-            <div class="skin-preview" style="background:${skin.colors.grass}">
-                <div style="position: absolute; font-size: 30px; opacity: 0.5;">${skin.icon}</div>
-                <div style="width:20px; height:100%; background:${skin.colors.river}; position:absolute; left:45%;"></div>
-                <div style="width:30px; height:10px; background:${skin.colors.bridge}; position:absolute; left:43%; top:30%;"></div>
-            </div>
-        `;
-
-        el.innerHTML = `
-            ${preview}
-            <div class="skin-info">
-                <div class="skin-name">${skin.name}</div>
-                <div class="skin-req">${isUnlocked ? 'UNLOCKED' : `Req: ${skin.min} 🏆`}</div>
-                <div class="equip-badge">EQUIPPED</div>
-            </div>
-        `;
-
-        if (isUnlocked) {
-            el.onclick = () => equipSkin(skin.id);
-        }
-
-        grid.appendChild(el);
-    });
 }
 
 // --- MATCHMAKING LOGIC ---
@@ -1393,21 +1379,23 @@ const TILE_SIZE = 30;
 
 // --- ARENA SKINS & CONFIGURATION ---
 const ARENA_SKINS = [
-    // --- GAP: 300 Trophies ---
+    // --- EARLY GAME (Keep these for progression) ---
     { id: 0, min: 0, name: "Training Camp", icon: "🎓", colors: { grass: '#a5c248', grassAccent: '#7e9c3f', river: '#2196f3', bridge: '#8d6e63', road: '#f4b331', border: '#5d4037' } },
     { id: 1, min: 100, name: "Barn farm", icon: "🌾", colors: { grass: '#F5D327', grassAccent: '#F7E074', river: '#754B17', bridge: '#8A7253', road: '#FCECCF', border: '#C4AA8F' } },
     { id: 2, min: 200, name: "Strike Stadium", icon: "🏟️", colors: { grass: '#2482E0', grassAccent: '#0D3D6B', river: '#EDE6C2', bridge: '#B83939', road: '#B83939', border: '#ffffff' } },
     { id: 3, min: 300, name: "Atalaya Climb", icon: "🏔️", colors: { grass: '#e0f2fe', grassAccent: '#bae6fd', river: '#0284c7', bridge: '#334155', road: '#94a3b8', border: '#1e293b' } },
     { id: 4, min: 500, name: "Trembling Volcano", icon: "🌋", colors: { grass: '#302C2C', grassAccent: '#171515', river: '#F5AD47', bridge: '#F2F2E6', road: '#FFE9C2', border: '#9C9C9C' } },
     { id: 5, min: 700, name: "Suburb Area", icon: "🌆️", colors: { grass: '#B5B5B5', grassAccent: '#DEDEDE', river: '#4C6949', bridge: '#141414', road: '#141414', border: '#F5F140' } },
-
-    // --- GAP: 500 Trophies ---
     { id: 6, min: 1000, name: "Circus Jolly", icon: "🎪", colors: { grass: '#B01313', grassAccent: '#FFFFFF', river: '#403C21', bridge: '#C209EB', road: '#EDD01F', border: '#EB09BA' } },
     { id: 7, min: 1500, name: "Chess Magnitude", icon: "♟️", colors: { grass: '#FFFFFF', grassAccent: '#000000', river: '#854d0e', bridge: '#a16207', road: '', border: '#052e16' } },
     { id: 8, min: 2000, name: "Forest Valley", icon: "🌲", colors: { grass: '#1C4714', grassAccent: '#284D16', river: '#0C3F6E', bridge: '#A8782C', road: '#402711', border: '#6E4A0C' } },
-    { id: 9, min: 2500, name: "Cherry Spring", icon: "🏯", colors: { grass: '#F2D0EE', grassAccent: '#ED87E3', river: '#86BAAB', bridge: '#DE2148', road: '#FAEBF6', border: '#2B0B11' } }
+    { id: 9, min: 2500, name: "Cherry Spring", icon: "🏯", colors: { grass: '#F2D0EE', grassAccent: '#ED87E3', river: '#86BAAB', bridge: '#DE2148', road: '#FAEBF6', border: '#2B0B11' } },
+    { id: 10, min: 3000, name: "Toxic Bog", icon: "☣️", colors: { grass: '#3f6212', grassAccent: '#1a2e05', river: '#84cc16', bridge: '#78350f', road: '#365314', border: '#bef264' } },
+    { id: 11, min: 3800, name: "Clockwork City", icon: "⚙️", colors: { grass: '#78716c', grassAccent: '#57534e', river: '#1c1917', bridge: '#b45309', road: '#d6d3d1', border: '#ea580c' } },
+    { id: 12, min: 4500, name: "Synthwave Street", icon: "🕶️", colors: { grass: '#111827', grassAccent: '#1f2937', river: '#db2777', bridge: '#06b6d4', road: '#374151', border: '#f472b6' } },
+    { id: 13, min: 5300, name: "Abyssal Void", icon: "🌌", colors: { grass: '#312e81', grassAccent: '#1e1b4b', river: '#000000', bridge: '#818cf8', road: '#4338ca', border: '#c7d2fe' } },
+    { id: 14, min: 6000, name: "Valhalla", icon: "🏛️", colors: { grass: '#f0f9ff', grassAccent: '#e0f2fe', river: '#fbbf24', bridge: '#ffffff', road: '#bae6fd', border: '#f59e0b' } }
 ];
-
 // Helper to get current skin
 function getArenaByTrophies(trophies) {
     // Reverse find to get the highest matching threshold
@@ -3250,4 +3238,5 @@ init();
 </script>
 </body>
 </html>
+
 
